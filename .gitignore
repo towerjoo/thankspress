@@ -1,0 +1,6 @@
+app.db
+*.pyc
+*.db
+*~
+venv
+.DS_Store

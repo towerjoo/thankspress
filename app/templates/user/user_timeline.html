@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+	<div class="inner min_height">
+		{% include "user/user_profile_sidebar.html" %}
+		<div class="content">
+			<header>
+				<span class="content_title">{{user.profile.name}}</span>
+				{% if g.user.is_authenticated() %}
+				<span class="content_buttons">
+					{% if user != g.user %} 
+						{% if Follow.is_following_by_follower_and_followed(g.user.id, user.id) %}
+							<a href="{{url_for('unfollow', followed_id = user.id)}}">Unfollow</a>
+						{% else %}
+							<a href="{{url_for('follow', followed_id = user.id)}}">Follow</a>
+						{% endif %}
+					{% endif %}
+				</span>
+				{% endif %}
+			</header>
+			{% if user.profile.bio != None %}
+				<p>{{user.profile.bio}}</p>
+			{% endif %}
+			{% if user.profile.is_facebook_visible %}
+				<p>Facebook: {{user.profile.facebook_username}}</p>
+			{% endif %}
+			{% if user.profile.is_twitter_visible %}
+				<p>Twitter: {{user.profile.twitter_username}}</p>
+			{% endif %}
+			{% if user.profile.website != None %}
+				<p>{{user.profile.website}}</p>
+			{% endif %}
+			<p>Following: {{user.total_following()}}</p>
+			<p>Followers: {{user.total_followers()}}</p>
+
+			<h2>Thanks Given</h2>
+			{% for thank in user.received_thanks %}
+				<p><b>thank.giver.name</b></p>
+				{% if thank.message != None %}
+					<p>{{thank.message}}</p>
+				{% endif %}
+			{% endfor %}
+
+			<h2>Thanks Received</h2>
+			{% for thank in user.thanks_given %}
+				<p><b>thank.giver.name</b></p>
+				{% if thank.message != None %}
+					<p>{{thank.message}}</p>
+				{% endif %}
+			{% endfor %}
+		</div>
+	</div>
+</div>
+{% endblock %}

@@ -1,0 +1,185 @@
+body {
+	background: #fff;
+}
+
+ul {
+	list-style: none;
+}
+
+ul, li, h1 {
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	text-decoration: none;
+	color: #555;
+}
+
+a:visited {
+	color: #555;
+}
+
+/*general classes*/
+.container {
+	position: relative;
+	width: 100%;
+}
+
+.inner {
+	position: relative;
+	width: 800px;
+	margin: 0 auto; 
+}
+
+.min_height {
+	min-height: 500px;
+}
+
+/*header*/
+
+#header {
+	height: 30px;
+	background: #eee;
+	border-bottom: 1px solid #ddd;
+}
+
+#header a:hover {
+	color: #555;
+}
+
+#header .logo {
+	float: left;
+	line-height: 30px;
+	color: #777;
+}
+
+#header .buttons {
+	float: right;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#header .buttons li {
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+	overflow: hidden;
+	line-height: 30px;
+	text-align: center;
+}
+
+#header .buttons li:hover {
+	background: #fafafa;
+}
+
+#header .buttons .text {
+	width: 80px;
+}
+
+#header .buttons a {
+	color: #777;
+}
+
+
+/*messages*/
+#messages {
+	margin-top: 10px;
+}
+
+#messages .inner {
+	background: #eee;
+	line-height: 30px;
+}
+
+#messages li {
+	text-align: center;
+	color: #777;
+}
+
+/*content*/
+#content {
+	margin-top: 20px;
+}
+
+#content_sidebar {
+	width: 180px;
+	border-right: 1px solid #eee;
+	float: left;
+}
+
+#account_profile {
+	width: 100%;
+	bottom: 1px solid #eee;
+	float: left;
+}
+
+#account_profile img {
+	display: block;
+	float: left;
+	height: 50px;
+	width: 50px;
+}
+
+#account_profile ul {
+	float: left;
+	width: 125px;
+	padding-left: 5px;
+}
+
+#account_pages {
+	float: left;
+	width: 100%;
+	margin-top: 10px;
+	padding-top: 10px;
+	border-top: 1px solid #eee;
+}
+
+#account_pages li {
+	line-height: 25px;
+}
+
+
+#content_sidebar .name {
+	font-size: 16px;
+}
+
+#content_sidebar .username {
+	font-size: 14px;
+}
+
+.content {
+	float: left;
+	width: 600px;
+	margin-left: 19px;
+}
+
+.content header {
+	width: 100%;
+	overflow: hidden;
+	line-height: 30px;
+}
+
+.content .content_title{
+	font-size: 20px;
+	font-weight: 700;
+	float: left;
+}
+
+.content .content_buttons {
+	float: right;
+	background: #eee; 
+	padding: 0 5px;
+}
+
+/*footer*/
+
+#footer {
+	margin-top: 20px;
+	height: 50px;
+	border-top: 1px solid #ccc;
+	background: rgba(0,0,0,.1);
+	text-align: center;
+	line-height: 50px;
+}
