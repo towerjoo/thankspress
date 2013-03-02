@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+    <div class="inner min_height">
+        {% include "users/settings_sidebar.html" %}
+        <div class="content">
+            <h1>Profile Picture</h1>
+            <figure>
+                {% if g.user.profile.picture != None %}
+                    <img style="max-height:300px;" src="{{ url_for('media', id = g.user.profile.picture_id) }}" />
+                {% else %}
+                    <img style="max-height:300px;" src="http://us.123rf.com/400wm/400/400/ra2studio/ra2studio1106/ra2studio110600062/9702964-joven-escribiendo-gracias-en-pizarra-enfoque-selectivo.jpg" />
+                {% endif %}
+            </figure>
+            <form action="" method="POST" enctype="multipart/form-data">
+
+                {{form.hidden_tag()}}
+
+                <p>
+                    Upload New Profile Picture:
+                    <br>
+                    <br>
+                    {% for error in form.errors.picture %}
+                        <span style="color: red;">[{{error}}]</span><br>
+                    {% endfor %}
+                    {{form.picture()}}
+                    <input type="submit" value="Upload">
+                </p>
+                
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

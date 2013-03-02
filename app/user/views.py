@@ -1,14 +1,18 @@
 import os
 
-from flask import render_template, flash, redirect, url_for, g, session, request, send_from_directory
+from flask import abort, render_template, flash, redirect, url_for, g, session, request
 from flask.ext.login import current_user, login_user, login_required, logout_user
 
 from app import app, db, lm
 from app.emails import email_verification, follower_notification
-from app.user.forms import SettingsPasswordChangeForm, SettingsProfileForm, SettingsEmailsForm, \
-    SettingsAccountPickUsernameForm, SettingsAccountForm, SignInForm, SignUpForm
-from app.user.models import Email, Follow, User, UserProfile
 from app.functions import Functions
+
+from app.media.models import Media
+from app.media.choices import MediaTypeChoices
+
+from app.user.forms import SettingsPasswordChangeForm, SettingsProfileForm, SettingsProfilePictureForm, \
+    SettingsEmailsForm, SettingsAccountPickUsernameForm, SettingsAccountForm, SignInForm, SignUpForm
+from app.user.models import Email, Follow, User, UserProfile
 
 from config import UPLOAD_FOLDER
 from datetime import datetime
@@ -37,7 +41,7 @@ def before_request():
                 flash('Welcome to ThanksPress!')
                 return redirect(url_for('user_timeline', username = g.user.username))
             else:
-                return render_template('user/settings_account_pick_username.html',
+                return render_template('users/settings_account_pick_username.html',
                     form = form,
                     title = 'Pick Username')
         elif g.user.is_deactivated():
@@ -60,7 +64,7 @@ def sign_in():
             db.session.add(g.user)
             db.session.commit()
             return redirect(request.args.get("next") or url_for('news_feed'))
-    return render_template('user/sign_in.html',
+    return render_template('users/sign_in.html',
         form = form,
         title = 'Sign In',
         message = '/sign-in')
@@ -94,7 +98,7 @@ def sign_up():
         #Redirect to Sign In
         flash('You have successfully signed up for ThanksPress.')
         return redirect(url_for('sign_in'))
-    return render_template('user/sign_up.html',
+    return render_template('users/sign_up.html',
         form = form,
         title = 'Sign Up',
         message = "/sign-up")
@@ -114,7 +118,7 @@ def settings_account():
         return redirect(url_for('settings_account'))
     else:
         form.username.data = g.user.username
-    return render_template('user/settings_account.html',
+    return render_template('users/settings_account.html',
         form = form,
         title = 'Account Settings for' + g.user.username)
 
@@ -127,7 +131,7 @@ def settings_account_deactivate():
         db.session.add(form.user)
         db.session.commit()
         return sign_out()
-    return render_template('user/settings_deactivate.html',
+    return render_template('users/settings_deactivate.html',
         form = form,
         title = 'Deactivate Account')
 
@@ -147,32 +151,31 @@ def settings_profile():
         form.name.data = g.user.profile.name
         form.bio.data = g.user.profile.bio
         form.website.data = g.user.profile.website
-    return render_template('user/settings_profile.html',
+    return render_template('users/settings_profile.html',
         form = form,
         title = 'Account Settings for' + g.user.username)
 
 @app.route('/settings/profile/picture/', methods = ['GET', 'POST'])
-def settings_profile_picture_upload():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and Functions.is_allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(UPLOAD_FOLDER, filename))
-            return redirect(url_for('uploaded_file', filename=filename))
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form action="" method=post enctype=multipart/form-data>
-      <p><input type=file name=file>
-         <input type=submit value=Upload>
-    </form>
-    '''
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               filename)
+@login_required
+def settings_profile_picture():
+    form = SettingsProfilePictureForm()
+    if form.validate_on_submit():
+        # Generate new filename then save picture
+        filename = str(g.user.id) + '.' + str(datetime.utcnow()) + '.png'
+        form.picture.data.save(os.path.join(UPLOAD_FOLDER, filename))
+        # Create Media
+        media = Media(MediaTypeChoices.PROFILE_PICTURE, filename)
+        db.session.add(media)
+        db.session.commit()
+        # Upload User Profile Picture
+        g.user.profile.picture_id = media.id
+        db.session.add(g.user.profile)
+        db.session.commit()
+        # Redirect to Profile Picture Page
+        return redirect(url_for('settings_profile_picture'))
+    return render_template('users/settings_profile_picture.html',
+        form = form,
+        title = 'Profile Picture Settings')
 
 @app.route('/settings/emails/', methods = ['GET', 'POST'])
 @login_required
@@ -180,7 +183,7 @@ def settings_emails():
     form = SettingsEmailsForm()
     if form.validate_on_submit():
         return redirect(url_for('settings_emails_add_email', email = form.email.data))
-    return render_template('user/settings_emails.html',
+    return render_template('users/settings_emails.html',
         form = form, 
         title = 'Manage Emails')
 
@@ -307,7 +310,7 @@ def settings_password_change():
 
 @app.route('/')
 def news_feed():
-    return render_template('user/news_feed.html',
+    return render_template('users/news_feed.html',
         title = 'news-feed',
         message = '/news-feed')
 
@@ -318,51 +321,51 @@ def news_feed():
 def user_timeline(username = None):
     user = User.get_user_by_username(username)
     if user != None and user.is_active():
-        return render_template('user/user_timeline.html',
+        return render_template('users/user_timeline.html',
             Follow = Follow,
             user = user,
             title = user.profile.name + "'s Timeline")
-    return render_template('404.html'), 404
+    abort(404)
 
 @app.route('/<username>/following/')
 def user_following(username = None):
     user = User.get_user_by_username(username)
     if user != None and user.is_active():
-        return render_template('user/user_following.html',
+        return render_template('users/user_following.html',
             Follow = Follow,
             user = user,
             title = user.profile.name + " is following these pages.")
-    return render_template('404.html'), 404
+    abort(404)
 
 @app.route('/<username>/followers/')
 def user_followers(username = None):
     user = User.get_user_by_username(username)
     if user != None and user.is_active():
-        return render_template('user/user_followers.html',
+        return render_template('users/user_followers.html',
             Follow = Follow,
             user = user,
             title = user.profile.name + "'s Followers")
-    return render_template('404.html'), 404
+    abort(404)
 
 @app.route('/<username>/thanks-given/')
 def user_thanks_given(username = None):
     user = User.get_user_by_username(username)
     if user != None and user.is_active():
-        return render_template('user/user_thanks_given.html',
+        return render_template('users/user_thanks_given.html',
             Follow = Follow,
             user = user,
             title = 'Thanks Given by ' + user.profile.name)
-    return render_template('404.html'), 404
+    abort(404)
 
 @app.route('/<username>/thanks-received/')
 def user_thanks_received(username = None):
     user = User.get_user_by_username(username)
     if user != None and user.is_active():
-        return render_template('user/user_thanks_received.html',
+        return render_template('users/user_thanks_received.html',
             Follow = Follow,
             user = user,
             title = 'Thanks Received by ' + user.profile.name)
-    return render_template('404.html'), 404
+    abort(404)
 
 # User Follows ---------------------------------------------
 
@@ -377,7 +380,7 @@ def users_follow(followed_id):
             db.session.commit()
             follower_notification(g.user, user)
         return redirect(url_for('user_timeline', username = user.username))
-    return render_template('404.html'), 404
+    abort(404)
 
 @app.route('/users/unfollow/<int:followed_id>/')
 @login_required
@@ -390,7 +393,7 @@ def users_unfollow(followed_id):
             db.session.add(follow)
             db.session.commit()
         return redirect(url_for('user_timeline', username = user.username))
-    return render_template('404.html'), 404
+    abort(404)
 
 # User ID Redirects ------------------------------------------
 
@@ -400,43 +403,43 @@ def users_user_timeline(user_id = None):
     try:
         return redirect(url_for('user_timeline', username = User.get_user(user_id).username))
     except:
-        return render_template('404.html'), 404
+        abort(404)
 
 @app.route('/users/<int:user_id>/followers/')
 def users_user_followers(user_id = None):
     try:
         return redirect(url_for('user_followers', username = User.get_user(user_id).username))
     except:
-        return render_template('404.html'), 404
+        abort(404)
 
 @app.route('/users/<int:user_id>/following/')
 def users_user_following(user_id = None):
     try:
         return redirect(url_for('user_following', username = User.get_user(user_id).username))
     except:
-        return render_template('404.html'), 404
+        abort(404)
 
 @app.route('/users/<int:user_id>/thanks-given/')
 def users_user_thanks_given(user_id = None):
     try:
         return redirect(url_for('user_thanks_given', username = User.get_user(user_id).username))
     except:
-        return render_template('404.html'), 404
+        abort(404)
 
 @app.route('/users/<int:user_id>/thanks-received/')
 def users_user_thanks_received(user_id = None):
     try:
         return redirect(url_for('user_thanks_received', username = User.get_user(user_id).username))
     except:
-        return render_template('404.html'), 404
+        abort(404)
 
 # ERROR Handlers ------------------------------------------
 
 @app.errorhandler(404)
 def internal_error(error):
-    return render_template('404.html'), 404
+    return render_template('404.html'), 500
 
 @app.errorhandler(500)
 def internal_error(error):
     db.session.rollback()
-    return render_template('user/500.html'), 500
+    return render_template('500.html'), 500

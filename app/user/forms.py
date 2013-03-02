@@ -1,8 +1,9 @@
 from app.functions import Functions
 from app.user.models import Email as EmailModel, User as UserModel
+from config import IMAGE_TYPES
 
-from flask.ext.wtf import BooleanField, Email, EqualTo, Form, Length, PasswordField, \
-    Required, TextField
+from flask.ext.wtf import BooleanField, Email, EqualTo, FileField, file_allowed, \
+    file_required, Form, Length, PasswordField, Required, TextField
 
 # Account -----------------------------------------
 class SettingsAccountPickUsernameForm(Form):
@@ -64,6 +65,19 @@ class SettingsProfileForm(Form):
         validators = [  Length( max = 500, 
                                 message="Website must be maximum 500 characters.")])
 
+class SettingsProfilePictureForm(Form):
+    picture = FileField("Profile Picture",
+        validators = [  Required( message = "Select a picture to upload.")])
+
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+
+        if self.picture.data != None and Functions.is_image_type(self.picture.data.filename):
+            return True
+        self.picture.errors.append('Image files only.')
+        return False
 
 # Registration -----------------------------------
 class SignInForm(Form):

@@ -4,7 +4,7 @@ import os
 ADMINS = ('thankspress@creco.co',)
 
 # Apps
-APPS = ('public_page', 'thank', 'user',)
+APPS = ('media', 'public_page', 'thank', 'user',)
 
 # Directories
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
@@ -26,8 +26,8 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASEDIR, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
 
 # Upload
-UPLOAD_FOLDER = os.path.join(BASEDIR, 'app/static/uploads')
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+UPLOAD_FOLDER = os.path.join(BASEDIR, 'uploads')
+IMAGE_TYPES = tuple('jpg jpe jpeg png gif svg bmp'.split())
 
 # WTF
 CSRF_ENABLED = True

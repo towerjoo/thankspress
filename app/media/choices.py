@@ -10,4 +10,5 @@ class MediaStatusChoices(Choices):
 class MediaTypeChoices(Choices):
     IMAGE = 1
     VIDEO = 2
-    YOUTUBE_VIDEO = 3
+    PROFILE_PICTURE = 3
+    YOUTUBE_VIDEO = 4

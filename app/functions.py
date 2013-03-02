@@ -1,4 +1,4 @@
-from config import ALLOWED_EXTENSIONS
+from config import IMAGE_TYPES
 from random import random
 from hashlib import md5
 
@@ -12,6 +12,6 @@ class Functions(object):
         return md5(str(random()) + str(val)).hexdigest()
 
     @staticmethod
-    def is_allowed_file(filename):
+    def is_image_type(filename):
         return '.' in filename and \
-            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
+            filename.rsplit('.', 1)[1] in IMAGE_TYPES

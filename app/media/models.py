@@ -7,7 +7,7 @@ class Media(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
     type = db.Column(db.SmallInteger, nullable = False)
-    path = db.Column(db.String(500), nullable = False)
+    path = db.Column(db.String(32), nullable = False)
     status = db.Column(db.SmallInteger, nullable = False)
     date_registered = db.Column(db.DateTime, nullable = False)
 
