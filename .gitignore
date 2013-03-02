@@ -3,4 +3,5 @@ app.db
 *.db
 *~
 venv
+uploads
 .DS_Store
