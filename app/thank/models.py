@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from app.media.models import Media
 from app.thank.choices import ThankCommentStatusChoices, ThankStatusChoices, \
     ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices, \
     ThankReceivedByPublicPageStatusChoices
@@ -14,10 +15,9 @@ class Thank(db.Model):
     message = db.Column(db.String(5000))
     message_language = db.Column(db.String(5))
     media_id = db.Column(db.Integer, db.ForeignKey("media.id"))
-    date_status_updated = db.Column(db.DateTime)
 
-    comments = db.relationship("Comment", 
-        primaryjoin = "and_(Comment.thank_id == Thank.id, Comment.status != 3)",
+    comments = db.relationship("ThankComment", 
+        primaryjoin = "and_(ThankComment.thank_id == Thank.id, ThankComment.status != 3)",
         backref = "thank", 
         lazy = "dynamic")
 
@@ -37,7 +37,6 @@ class Thank(db.Model):
 
     def make_public(self):
         self.status = ThankStatusChoices.PUBLIC
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_private(self):
@@ -45,7 +44,6 @@ class Thank(db.Model):
 
     def make_private(self):
         self.status = ThankStatusChoices.PRIVATE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -53,7 +51,6 @@ class Thank(db.Model):
 
     def make_reported(self):
         self.status = ThankStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -64,7 +61,6 @@ class Thank(db.Model):
 
     def make_deleted(self):
         self.status = ThankStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     @staticmethod
@@ -85,10 +81,8 @@ class ThankComment(db.Model):
     date_registered = db.Column(db.DateTime, nullable = False)
     
     comment_language = db.Column(db.String(5))
-    date_status_updated = db.Column(db.DateTime)
 
-    def __init__(self, comment, thank_id, commenter_id, comment_language = None, 
-                            status = ThankCommentStatusChoices.VISIBLE):
+    def __init__(self, comment, thank_id, commenter_id, comment_language = None, status = ThankCommentStatusChoices.VISIBLE):
         self.comment = comment
         self.thank_id = thank_id
         self.commenter_id = commenter_id
@@ -104,7 +98,6 @@ class ThankComment(db.Model):
 
     def make_visible(self):
         self.status = ThankCommentStatusChoices.VISIBLE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -112,7 +105,6 @@ class ThankComment(db.Model):
 
     def make_reported(self):
         self.status = ThankCommentStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -123,7 +115,6 @@ class ThankComment(db.Model):
 
     def make_deleted(self):
         self.status = ThankCommentStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     @staticmethod
@@ -141,8 +132,6 @@ class ThankReceivedByEmail(db.Model):
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
 
-    date_status_updated = db.Column(db.DateTime)
-
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByEmailStatusChoices.USER_NOT_FOUND):
         self.thank_id = thank_id
         self.receiver_id = receiver_id
@@ -157,7 +146,6 @@ class ThankReceivedByEmail(db.Model):
 
     def make_user_not_found(self):
         self.status = ThankReceivedByEmailStatusChoices.USER_NOT_FOUND
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_migrated(self):
@@ -165,7 +153,6 @@ class ThankReceivedByEmail(db.Model):
 
     def make_migrated(self):
         self.status = ThankReceivedByEmailStatusChoices.MIGRATED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -173,7 +160,6 @@ class ThankReceivedByEmail(db.Model):
 
     def make_reported(self):
         self.status = ThankReceivedByEmailStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -184,7 +170,6 @@ class ThankReceivedByEmail(db.Model):
 
     def make_deleted(self):
         self.status = ThankReceivedByEmailStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
 
@@ -195,8 +180,6 @@ class ThankReceivedByPublicPage(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey("public_page.id"), nullable = False)
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
-
-    date_status_updated = db.Column(db.DateTime)
 
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByPublicPageStatusChoices.VISIBLE):
         self.thank_id = thank_id
@@ -212,7 +195,6 @@ class ThankReceivedByPublicPage(db.Model):
 
     def make_visible(self):
         self.status = ThankReceivedByPublicPageStatusChoices.VISIBLE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -220,7 +202,6 @@ class ThankReceivedByPublicPage(db.Model):
 
     def make_reported(self):
         self.status = ThankReceivedByPublicPageStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -231,7 +212,6 @@ class ThankReceivedByPublicPage(db.Model):
 
     def make_deleted(self):
         self.status = ThankReceivedByPublicPageStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
 
@@ -242,8 +222,6 @@ class ThankReceivedByUser(db.Model):
     receiver_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
-    
-    date_status_updated = db.Column(db.DateTime)
 
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByUserStatusChoices.UNREAD):
         self.thank_id = thank_id
@@ -259,7 +237,6 @@ class ThankReceivedByUser(db.Model):
 
     def make_unread(self):
         self.status = ThankReceivedByUserStatusChoices.UNREAD
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_visible(self):
@@ -267,7 +244,6 @@ class ThankReceivedByUser(db.Model):
 
     def make_visible(self):
         self.status = ThankReceivedByUserStatusChoices.VISIBLE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_hidden(self):
@@ -275,7 +251,6 @@ class ThankReceivedByUser(db.Model):
 
     def make_hidden(self):
         self.status = ThankReceivedByUserStatusChoices.HIDDEN
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -283,7 +258,6 @@ class ThankReceivedByUser(db.Model):
 
     def make_reported(self):
         self.status = ThankReceivedByUserStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -294,6 +268,5 @@ class ThankReceivedByUser(db.Model):
 
     def make_deleted(self):
         self.status = ThankReceivedByUserStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 

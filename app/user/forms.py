@@ -4,26 +4,29 @@ from app.user.models import Email as EmailModel, User as UserModel
 from flask.ext.wtf import BooleanField, Email, EqualTo, Form, Length, PasswordField, \
     Required, TextField
 
-class EmailForm(Form):
-    email = TextField("Email",
+# Account -----------------------------------------
+class SettingsAccountPickUsernameForm(Form):
+    username = TextField("Username", 
         validators = [  Required(),
-                        Length( max = 320, 
-                                message = "Email must be maximum 320 characters."),
-                        Email()])
+                        Length( max = 32, 
+                                message = "Username must be maximum 320 characters.")])
+
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+
+        if UserModel.is_unique_username(self.username.data):
+            return True
+        self.username.errors.append('Username is not available.')
+        return False
 
 
-class ChangePasswordForm(Form):
-    current_password = PasswordField("Current Password", 
-        validators = [  Required()])
-    new_password = PasswordField("New Password", 
+class SettingsAccountForm(Form):
+    username = TextField("Username", 
         validators = [  Required(),
-                        Length( min = 8, 
-                                max = 32, 
-                                message="New Password must be minimum 8 maximum 32 characters."),
-                        EqualTo('new_password_again', 
-                                message = "New Password did not match New Password Again.")])
-    new_password_again = PasswordField("New Password Again", 
-        validators = [  Required()])
+                        Length( max = 32, 
+                                message = "Username must be maximum 320 characters.")])
 
     def __init__(self, user, *args, **kwargs):
         Form.__init__(self, *args, **kwargs)
@@ -34,13 +37,22 @@ class ChangePasswordForm(Form):
         if not rv:
             return False
 
-        if self.user.match_password(self.current_password.data):
+        if self.user.username == self.username.data or UserModel.is_unique_username(self.username.data):
             return True
-        self.current_password.errors.append('Current Password field did not match with our records.')
+        self.username.errors.append('Username is not available.')
         return False
 
+# Emails -----------------------------------------
+class SettingsEmailsForm(Form):
+    email = TextField("Email",
+        validators = [  Required(),
+                        Length( max = 320, 
+                                message = "Email must be maximum 320 characters."),
+                        Email()])
 
-class EditProfileForm(Form):
+
+# Profile ----------------------------------------
+class SettingsProfileForm(Form):
     name = TextField("Name", 
         validators = [  Required(), 
                         Length( max = 32, 
@@ -61,55 +73,7 @@ class EditProfileForm(Form):
                                 message="Website must be maximum 500 characters.")])
 
 
-class PickUsernameForm(Form):
-    username = TextField("Username", 
-        validators = [  Required(),
-                        Length( max = 32, 
-                                message = "Username must be maximum 320 characters.")])
-
-    def validate(self):
-        rv = Form.validate(self)
-        if not rv:
-            return False
-
-        if UserModel.is_unique_username(self.username.data):
-            return True
-        self.username.errors.append('Username is not available.')
-        return False
-
-
-class SettingsForm(Form):
-    username = TextField("Username", 
-        validators = [  Required(),
-                        Length( max = 32, 
-                                message = "Username must be maximum 320 characters.")])
-
-    def __init__(self, user, *args, **kwargs):
-        Form.__init__(self, *args, **kwargs)
-        self.user = user
-
-    def validate(self):
-        rv = Form.validate(self)
-        if not rv:
-            return False
-
-        if self.user.username == self.username.data or UserModel.is_unique_username(self.username.data):
-            return True
-        self.username.errors.append('Username is not available.')
-        return False
-
-
-class GiveThanksForm(Form):
-    receivers = TextField("To", 
-        validators = [  Required()])
-    message = TextField("Message", 
-        validators = [  Length( max = 5000, 
-                                message="Message must be maximum 5000 characters.")])
-    media = TextField("Media") #Integrate Flask-Uploads
-    private = BooleanField("Private", 
-        default = False)
-
-
+# Registration -----------------------------------
 class SignInForm(Form):
     email = TextField("Email", 
         validators = [  Required()])
@@ -168,7 +132,30 @@ class SignUpForm(Form):
         return False
 
 
-class SearchForm(Form):
-    search = TextField('Search', 
+# Security --------------------------------------
+class SettingsPasswordChangeForm(Form):
+    current_password = PasswordField("Current Password", 
         validators = [  Required()])
-    
+    new_password = PasswordField("New Password", 
+        validators = [  Required(),
+                        Length( min = 8, 
+                                max = 32, 
+                                message="New Password must be minimum 8 maximum 32 characters."),
+                        EqualTo('new_password_again', 
+                                message = "New Password did not match New Password Again.")])
+    new_password_again = PasswordField("New Password Again", 
+        validators = [  Required()])
+
+    def __init__(self, user, *args, **kwargs):
+        Form.__init__(self, *args, **kwargs)
+        self.user = user
+
+    def validate(self):
+        rv = Form.validate(self)
+        if not rv:
+            return False
+
+        if self.user.match_password(self.current_password.data):
+            return True
+        self.current_password.errors.append('Current Password field did not match with our records.')
+        return False

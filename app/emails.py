@@ -19,16 +19,16 @@ def follower_notification(follower, followed):
     send_email("ThanksPress %s is now following you!" % follower.username,
         ADMINS[0],
         [followed.get_primary_email().email],
-        render_template("follower_email.txt", 
+        render_template("emails/follower_notification.txt", 
             user = followed, follower = follower),
-        render_template("follower_email.html", 
+        render_template("emails/follower_notification.html", 
             user = followed, follower = follower))
 
 def email_verification(email):
     send_email("ThanksPress email verification.",
         ADMINS[0],
         [email.email],
-        render_template("email_verification.txt", 
+        render_template("emails/email_verification.txt", 
             email = email),
-        render_template("email_verification.html", 
+        render_template("emails/email_verification.html", 
             email = email))

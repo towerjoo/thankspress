@@ -1,7 +1,6 @@
-from hashlib import md5
-from flask.ext.wtf import BooleanField, Email, Form, Length, Required, TextField
+from flask.ext.wtf import BooleanField, Form, Length, Required, TextField
 
-class GiveThanksForm(Form):
+class ThankGiveForm(Form):
     receivers = TextField("To", 
         validators = [  Required()])
     message = TextField("Message", 

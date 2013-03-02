@@ -8,7 +8,6 @@ from app.user.choices import EmailStatusChoices, FollowStatusChoices, UserStatus
 from config import FORBIDDEN_USERNAMES
 from datetime import datetime, timedelta
 from hashlib import md5
-from sqlalchemy import desc, or_
 
 class Email(db.Model):
 
@@ -18,9 +17,7 @@ class Email(db.Model):
     is_primary = db.Column(db.Boolean, nullable = False)
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
-
-    verification_key = db.Column(db.String(32))
-    date_status_updated = db.Column(db.DateTime)
+    verification_key = db.Column(db.String(32)) # To be deleted once verified
 
     thanks_received = db.relationship('Thank',
         secondary = 'thank_received_by_email', 
@@ -32,10 +29,10 @@ class Email(db.Model):
     def __init__(self, email, user_id, is_primary = False, status = EmailStatusChoices.NOT_VERIFIED):
         self.email = email
         self.user_id = user_id
-        self.verification_key = Functions.generate_key(email)
         self.is_primary = is_primary
         self.status = status
         self.date_registered = datetime.utcnow()
+        self.verification_key = Functions.generate_key(email)
 
     def __repr__(self):
         return '<Email %r>' % (self.id)
@@ -56,7 +53,6 @@ class Email(db.Model):
 
     def make_not_verified(self):
         self.status = EmailStatusChoices.NOT_VERIFIED
-        self.date_status_updated = datetime.utcnow()
         self.verification_key = Functions.generate_key(self.mail)
         return self
 
@@ -65,7 +61,6 @@ class Email(db.Model):
 
     def make_verified(self):
         self.status = EmailStatusChoices.VERIFIED
-        self.date_status_updated = datetime.utcnow()
         self.verification_key = None
         return self
 
@@ -74,7 +69,6 @@ class Email(db.Model):
 
     def make_reported(self):
         self.status = EmailStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -86,7 +80,6 @@ class Email(db.Model):
     def make_deleted(self):
         self.status = EmailStatusChoices.DELETED
         self.is_primary = False
-        self.date_status_updated = datetime.utcnow()
         return self
 
     @staticmethod
@@ -117,16 +110,14 @@ class Follow(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     followed_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-    date_registered = db.Column(db.DateTime, nullable = False)
     status = db.Column(db.SmallInteger, nullable = False) 
-
-    date_status_updated = db.Column(db.DateTime)
+    date_registered = db.Column(db.DateTime, nullable = False)
 
     def __init__(self, follower_id, followed_id, status = FollowStatusChoices.FOLLOWING):
         self.follower_id = follower_id
         self.followed_id = followed_id
-        self.date_registered = datetime.utcnow()
         self.status = status
+        self.date_registered = datetime.utcnow()
 
     def __repr__(self):
         return '<Follow %r>' % (self.id)
@@ -136,7 +127,6 @@ class Follow(db.Model):
 
     def make_following(self):
         self.status = FollowStatusChoices.FOLLOWING
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -147,7 +137,6 @@ class Follow(db.Model):
 
     def make_deleted(self):
         self.status = FollowStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     @staticmethod
@@ -170,41 +159,44 @@ class Follow(db.Model):
         return Follow.query.filter(Follow.follower_id == follower_id, Follow.followed_id == followed_id, Follow.status == FollowStatusChoices.DELETED).all()
 
 
+class Profile(db.Model):
+
+    id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
+    name = db.Column(db.String(32), nullable = False)
+    
+    picture_id = db.Column(db.Integer, db.ForeignKey("media.id"))
+    bio = db.Column(db.String(500))
+    website = db.Column(db.String(500))
+
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+    def __repr__(self):
+        return "<UserProfile %r - %s>" % (self.id, self.name)
+
+
 class User(db.Model):
 
-    #account
     id = db.Column(db.Integer, primary_key = True)
     password = db.Column(db.String(32), nullable = False)
-    status = db.Column(db.SmallInteger, nullable = False) 
     language = db.Column(db.String(5), nullable = False)
+    status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
 
-    username = db.Column(db.String(32))
-    reset_password_key = db.Column(db.String(32))
-    date_status_updated = db.Column(db.DateTime)
+    date_last_signed_in = db.Column(db.DateTime)
     date_last_acted = db.Column(db.DateTime)
-    date_changed_password = db.Column(db.DateTime)
-    date_set_reset_password_key = db.Column(db.DateTime)
+    username = db.Column(db.String(32))
+    password_reset_key = db.Column(db.String(32))
+    password_reset_key_expiration_date = db.Column(db.DateTime)
 
-    #comments
-    comments = db.relationship("Comment", 
-        primaryjoin = "and_(Comment.commenter_id == User.id, Comment.status != %d)" % ThankCommentStatusChoices.DELETED, 
-        backref = "commenter", 
-        lazy = "dynamic")
-
-    #contributions
-    public_pages = db.relationship("PublicPage", 
-        primaryjoin = "and_(PublicPage.creator_id == User.id, PublicPage.status != %d)" % PublicPageStatusChoices.DELETED, 
-        backref = "creator", 
-        lazy = "dynamic")
-
-    #emails
+    # Email
     emails = db.relationship("Email", 
         primaryjoin = "and_(Email.user_id == User.id, Email.status != %d)" % EmailStatusChoices.DELETED, 
         backref = "user", 
         lazy = "dynamic")
 
-    #follows
+    # Follow
     following = db.relationship('User',
         secondary = 'follow', 
         primaryjoin = "and_(User.id == Follow.follower_id, User.status != %d)" % UserStatusChoices.DELETED, 
@@ -212,10 +204,16 @@ class User(db.Model):
         backref = db.backref('followers', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
-    #profile
-    profile = db.relationship('UserProfile', uselist = False)
+    # Profile
+    profile = db.relationship('Profile', uselist = False)
 
-    #thanks
+    # PublicPage
+    public_pages = db.relationship("PublicPage", 
+        primaryjoin = "and_(PublicPage.creator_id == User.id, PublicPage.status != %d)" % PublicPageStatusChoices.DELETED, 
+        backref = "creator", 
+        lazy = "dynamic")
+
+    # Thank
     thanks_given = db.relationship("Thank", 
         primaryjoin="and_(Thank.giver_id == User.id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
         backref = "giver", 
@@ -228,11 +226,17 @@ class User(db.Model):
         backref = db.backref('receiver_users', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
+    # ThankComment
+    comments = db.relationship("ThankComment", 
+        primaryjoin = "and_(ThankComment.commenter_id == User.id, ThankComment.status != %d)" % ThankCommentStatusChoices.DELETED, 
+        backref = "commenter", 
+        lazy = "dynamic")
+
     def __init__(self, password, status = UserStatusChoices.NEW, language = 'en'):
         self.password = md5(password).hexdigest()
         self.status = status
+        self.date_registered = datetime.utcnow()
         self.language = language
-        self.date_registered = self.date_status_updated = self.date_last_acted = datetime.utcnow()
 
     def __repr__(self):
         return "<User %r - %s>" % (self.id, self.profile.name)
@@ -258,7 +262,6 @@ class User(db.Model):
 
     def make_new(self):
         self.status = UserStatusChoices.NEW
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_activated(self):
@@ -266,7 +269,6 @@ class User(db.Model):
 
     def make_activated(self):
         self.status = UserStatusChoices.ACTIVE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_deactivated(self):
@@ -274,7 +276,6 @@ class User(db.Model):
 
     def make_deactivated(self):
         self.status = UserStatusChoices.INACTIVE
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_reported(self):
@@ -282,7 +283,6 @@ class User(db.Model):
 
     def make_reported(self):
         self.status = UserStatusChoices.REPORTED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def is_not_deleted(self):
@@ -293,7 +293,6 @@ class User(db.Model):
 
     def make_deleted(self):
         self.status = UserStatusChoices.DELETED
-        self.date_status_updated = datetime.utcnow()
         return self
 
     def match_password(self, password):
@@ -304,26 +303,22 @@ class User(db.Model):
         self.date_changed_password = datetime.utcnow()
         return self
 
-    def set_reset_password_key(self):
-        self.reset_password_key = Functions.generate_key(email)
-        self.date_set_reset_password_key = datetime.utcnow()
+    def set_password_reset_key(self):
+        self.password_reset_key = Functions.generate_key(email)
+        self.password_reset_key_expiration_date = datetime.utcnow() + timedelta(days=1)
         return self
 
-    def can_reset_password(self, reset_password_key):
-        return self.reset_password_key != None and self.reset_password_key == reset_password_key and datetime.utcnow() < self.date_set_reset_password_key + timedelta(days=1)
+    def can_reset_password(self, password_reset_key):
+        return self.password_reset_key != None and self.password_reset_key == password_reset_key and self.password_reset_key_expiration_date > datetime.utcnow()
 
     def reset_password(self, new_password):
         self.change_password(new_password)
-        self.reset_password_key = None
-        self.date_set_reset_password_key = None
+        self.password_reset_key = None
+        self.password_reset_key_expiration_date = None
         return self
  
     def get_primary_email(self):
         return Email.get_primary_email_by_user_id(self.id)
-
-    def update_date_last_acted(self):
-        self.date_last_acted = datetime.utcnow()
-        return self
 
     def total_following(self):
         return len(self.following.all())-1 #Exclude user's self following
@@ -374,24 +369,3 @@ class User(db.Model):
             count += 1
             username = username[:-1] + str(count)
         return username
-
-
-class UserProfile(db.Model):
-
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
-    name = db.Column(db.String(32), nullable = False)
-
-    avatar = db.Column(db.String(32))
-    bio = db.Column(db.String(500))
-    facebook_username = db.Column(db.String(32))
-    is_facebook_visible = db.Column(db.Boolean)
-    twitter_username = db.Column(db.String(32))
-    is_twitter_visible = db.Column(db.Boolean)
-    website = db.Column(db.String(500))
-
-    def __init__(self, user_id, name):
-        self.user_id = user_id
-        self.name = name
-
-    def __repr__(self):
-        return "<UserProfile %r - %s>" % (self.user_id, self.name)
