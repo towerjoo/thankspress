@@ -23,7 +23,7 @@ def before_request():
         db.session.commit()
         if g.user.is_activated():
             pass
-        elif g.user.is_new():
+        elif g.user.is_new() and request.endpoint != 'sign_out':
             form = SettingsAccountPickUsernameForm()
             if form.validate_on_submit():
                 g.user.username = form.username.data
@@ -44,7 +44,6 @@ def before_request():
 
 # Registration -------------------------------------
 
-@app.route('/sign-in', methods = ['GET', 'POST'])
 @app.route('/sign-in/', methods = ['GET', 'POST'])
 def sign_in():
     if g.user.is_authenticated():
@@ -62,13 +61,11 @@ def sign_in():
         title = 'Sign In',
         message = '/sign-in')
 
-@app.route('/sign-out')
 @app.route('/sign-out/')
 def sign_out():
     logout_user()
     return redirect(url_for('news_feed'))
 
-@app.route('/sign-up', methods = ['GET', 'POST'])
 @app.route('/sign-up/', methods = ['GET', 'POST'])
 def sign_up():
     if g.user.is_authenticated():
@@ -100,9 +97,7 @@ def sign_up():
 
 # Settings ---------------------------------------
 
-@app.route('/settings', methods = ['GET', 'POST'])
 @app.route('/settings/', methods = ['GET', 'POST'])
-@app.route('/settings/account', methods = ['GET', 'POST'])
 @app.route('/settings/account/', methods = ['GET', 'POST'])
 @login_required
 def settings_account():
@@ -119,7 +114,6 @@ def settings_account():
         form = form,
         title = 'Account Settings for' + g.user.username)
 
-@app.route('/settings/change-password', methods = ['GET', 'POST'])
 @app.route('/settings/change-password/', methods = ['GET', 'POST'])
 @login_required
 def settings_change_password():
@@ -133,7 +127,6 @@ def settings_change_password():
         form = form,
         title = "Change Password")
 
-@app.route('/settings/deactivate', methods = ['GET','POST'])
 @app.route('/settings/deactivate/', methods = ['GET','POST'])
 @login_required
 def settings_deactivate():
@@ -147,7 +140,6 @@ def settings_deactivate():
         form = form,
         title = 'Deactivate Account')
 
-@app.route('/settings/profile', methods = ['GET', 'POST'])
 @app.route('/settings/profile/', methods = ['GET', 'POST'])
 @login_required
 def settings_profile():
@@ -176,7 +168,6 @@ def settings_profile():
         form = form,
         title = 'Account Settings for' + g.user.username)
 
-@app.route('/settings/emails', methods = ['GET', 'POST'])
 @app.route('/settings/emails/', methods = ['GET', 'POST'])
 @login_required
 def settings_emails():
@@ -303,9 +294,7 @@ def news_feed():
 
 # User Pages -----------------------------------------------
 
-@app.route('/<username>')
 @app.route('/<username>/')
-@app.route('/<username>/timeline')
 @app.route('/<username>/timeline/')
 def user_timeline(username = None):
     user = User.get_user_by_username(username)
@@ -316,92 +305,45 @@ def user_timeline(username = None):
             title = user.username + "'s Timeline")
     return render_template('404.html'), 404
 
-@app.route('/<username>/following')
 @app.route('/<username>/following/')
 def user_following(username = None):
     if username != None:
         user = User.get_user_by_username(username)
         if user != None and user.is_active():
-            return render_template('user/following.html', 
+            return render_template('user/user_following.html', 
                 title = user.username + ' is following them.',
                 message = '/' + user.username + '/following')
     return render_template('404.html'), 404
 
-@app.route('/<username>/followers')
 @app.route('/<username>/followers/')
 def user_followers(username = None):
     if username != None:
         user = User.get_user_by_username(username)
         if user != None and user.is_active():
-            return render_template('user/followers.html', 
+            return render_template('user/user_followers.html', 
                 title = 'They are following' + user.username,
                 message = '/' + user.username + '/followers')
     return render_template('404.html'), 404
 
-@app.route('/<username>/thanks-given')
 @app.route('/<username>/thanks-given/')
 def user_thanks_given(username = None):
     if username != None:
         user = User.get_user_by_username(username)
         if user != None and user.is_active():
-            return render_template('user/thanks_given.html', 
+            return render_template('user/user_thanks_given.html', 
                 title = 'Thanks Given by' + user.username,
                 message = '/' + user.username + '/thanks-given')
     return render_template('404.html'), 404
 
-@app.route('/<username>/thanks-received')
 @app.route('/<username>/thanks-received/')
 def user_thanks_received(username = None):
     if username != None:
         user = User.get_user_by_username(username)
         if user != None and user.is_active():
-            return render_template('user/thanks_received.html', 
+            return render_template('user/user_thanks_received.html', 
                 title = 'Thanks received by' + user.username,
                 message = '/' + user.username + '/thanks-received')
     return render_template('404.html'), 404
-
-# User ID Redirects ------------------------------------------
-
-@app.route('/users/<int:user_id>')
-@app.route('/users/<int:user_id>/timeline')
-@app.route('/users/<int:user_id>/timeline/')
-def users_user_timeline(user_id = None):
-    try:
-        return redirect(url_for('user_timeline', User.get_user(user_id).username))
-    except:
-        return render_template('404.html'), 404
-
-@app.route('/users/<int:user_id>/followers')
-@app.route('/users/<int:user_id>/followers/')
-def users_user_timeline(user_id = None):
-    try:
-        return redirect(url_for('user_followers', User.get_user(user_id).username))
-    except:
-        return render_template('404.html'), 404
-
-@app.route('/users/<int:user_id>/following')
-@app.route('/users/<int:user_id>/following/')
-def users_user_timeline(user_id = None):
-    try:
-        return redirect(url_for('user_followers', User.get_user(user_id).username))
-    except:
-        return render_template('404.html'), 404
-
-@app.route('/users/<int:user_id>/thanks-given')
-@app.route('/users/<int:user_id>/thanks-given/')
-def users_user_timeline(user_id = None):
-    try:
-        return redirect(url_for('user_thanks_given', User.get_user(user_id).username))
-    except:
-        return render_template('404.html'), 404
-
-@app.route('/users/<int:user_id>/thanks-received')
-@app.route('/users/<int:user_id>/thanks-received/')
-def users_user_timeline(user_id = None):
-    try:
-        return redirect(url_for('user_thanks_received', User.get_user(user_id).username))
-    except:
-        return render_template('404.html'), 404
 
 # User Follows ---------------------------------------------
 
@@ -430,6 +372,44 @@ def user_unfollow(followed_id):
             db.session.commit()
         return redirect(url_for('user_timeline', username = user.username))
     return render_template('404.html'), 404
+
+# User ID Redirects ------------------------------------------
+
+@app.route('/users/<int:user_id>/')
+@app.route('/users/<int:user_id>/timeline/')
+def users_user_timeline(user_id = None):
+    try:
+        return redirect(url_for('user_timeline', username = User.get_user(user_id).username))
+    except:
+        return render_template('404.html'), 404
+
+@app.route('/users/<int:user_id>/followers/')
+def users_user_followers(user_id = None):
+    try:
+        return redirect(url_for('user_followers', username = User.get_user(user_id).username))
+    except:
+        return render_template('404.html'), 404
+
+@app.route('/users/<int:user_id>/following/')
+def users_user_following(user_id = None):
+    try:
+        return redirect(url_for('user_following', username = User.get_user(user_id).username))
+    except:
+        return render_template('404.html'), 404
+
+@app.route('/users/<int:user_id>/thanks-given/')
+def users_user_thanks_given(user_id = None):
+    try:
+        return redirect(url_for('user_thanks_given', username = User.get_user(user_id).username))
+    except:
+        return render_template('404.html'), 404
+
+@app.route('/users/<int:user_id>/thanks-received/')
+def users_user_thanks_received(user_id = None):
+    try:
+        return redirect(url_for('user_thanks_received', username = User.get_user(user_id).username))
+    except:
+        return render_template('404.html'), 404
 
 # ERROR Handlers ------------------------------------------
 

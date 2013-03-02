@@ -48,12 +48,12 @@
                                         Account
                                     </a>
                                 </li>
-                                <li class="text">
-                                    <a href="{{url_for('sign_out')}}">
-                                        Sign Out
-                                    </a>
-                                </li>
                             {% endif %}
+                            <li class="text">
+                                <a href="{{url_for('sign_out')}}">
+                                    Sign Out
+                                </a>
+                            </li>
                         {% else %}
                             <li class="text">
                                 <a href="{{url_for('sign_up')}}">Sign Up</a>
