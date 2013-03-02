@@ -5,7 +5,7 @@ from app import app, db, lm
 from app.emails import email_verification, follower_notification
 from app.user.forms import SettingsPasswordChangeForm, SettingsProfileForm, SettingsEmailsForm, \
     SettingsAccountPickUsernameForm, SettingsAccountForm, SignInForm, SignUpForm
-from app.user.models import Email, Follow, User, Profile
+from app.user.models import Email, Follow, User, UserProfile
 from app.functions import Functions
 
 from datetime import datetime
@@ -78,7 +78,7 @@ def sign_up():
         db.session.add(user)
         db.session.commit()
         #Register user's Profile
-        user_profile = Profile(id = user.id, name = form.name.data)
+        user_profile = UserProfile(user_id = user.id, name = form.name.data)
         db.session.add(user_profile)
         #Register user's Email
         email = Email(user_id = user.id, email = form.email.data, is_primary = True)

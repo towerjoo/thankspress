@@ -11,8 +11,8 @@ class Media(db.Model):
     status = db.Column(db.SmallInteger, nullable = False)
     date_registered = db.Column(db.DateTime, nullable = False)
 
-    profile = db.relationship('Profile', 
-        primaryjoin='and_(Profile.picture_id == Media.id)',
+    user_profile = db.relationship('UserProfile', 
+        primaryjoin='and_(UserProfile.picture_id == Media.id)',
         backref = 'picture', 
         lazy = 'dynamic')
 

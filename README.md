@@ -5,7 +5,6 @@ Let's be thankful.
 
 Installation
 ------------
-
 ...make sure you are insite thankspress main directory to follow these commands
 - pip install virtualenv
 - virtualenv venv
@@ -17,5 +16,4 @@ Installation
 
 Credits
 ------------
-
 Special thanks to miguelgrinberg for his [microblog tutorial](https://github.com/miguelgrinberg/microblog).

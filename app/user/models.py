@@ -159,23 +159,6 @@ class Follow(db.Model):
         return Follow.query.filter(Follow.follower_id == follower_id, Follow.followed_id == followed_id, Follow.status == FollowStatusChoices.DELETED).all()
 
 
-class Profile(db.Model):
-
-    id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
-    name = db.Column(db.String(32), nullable = False)
-    
-    picture_id = db.Column(db.Integer, db.ForeignKey("media.id"))
-    bio = db.Column(db.String(500))
-    website = db.Column(db.String(500))
-
-    def __init__(self, id, name):
-        self.id = id
-        self.name = name
-
-    def __repr__(self):
-        return "<UserProfile %r - %s>" % (self.id, self.name)
-
-
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
@@ -205,7 +188,7 @@ class User(db.Model):
         lazy = 'dynamic')
 
     # Profile
-    profile = db.relationship('Profile', uselist = False)
+    profile = db.relationship('UserProfile', uselist = False)
 
     # PublicPage
     public_pages = db.relationship("PublicPage", 
@@ -369,3 +352,20 @@ class User(db.Model):
             count += 1
             username = username[:-1] + str(count)
         return username
+
+
+class UserProfile(db.Model):
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
+    name = db.Column(db.String(32), nullable = False)
+    
+    picture_id = db.Column(db.Integer, db.ForeignKey("media.id"))
+    bio = db.Column(db.String(500))
+    website = db.Column(db.String(500))
+
+    def __init__(self, user_id, name):
+        self.user_id = user_id
+        self.name = name
+
+    def __repr__(self):
+        return "<Profile %r - %s>" % (self.user_id, self.name)

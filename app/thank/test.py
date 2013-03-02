@@ -7,7 +7,7 @@ from sqlalchemy import or_, desc
 
 from config import BASEDIR
 from app import app, db
-from app.user.models import Email, Follow, Profile, User
+from app.user.models import Email, Follow, User, UserProfile
 from app.thank.models import Media, Thank, ThankReceivedByEmail, ThankReceivedByPublicPage, ThankReceivedByUser
 from app.test import BaseTestCase
 
@@ -41,10 +41,10 @@ class TestCase(BaseTestCase):
         db.session.add(u4)
         db.session.commit()
 
-        up1 = Profile(id = u1.id, name = u1_name)
-        up2 = Profile(id = u2.id, name = u2_name)
-        up3 = Profile(id = u3.id, name = u3_name)
-        up4 = Profile(id = u4.id, name = u4_name)
+        up1 = UserProfile(user_id = u1.id, name = u1_name)
+        up2 = UserProfile(user_id = u2.id, name = u2_name)
+        up3 = UserProfile(user_id = u3.id, name = u3_name)
+        up4 = UserProfile(user_id = u4.id, name = u4_name)
 
         db.session.add(up1)
         db.session.add(up2)
