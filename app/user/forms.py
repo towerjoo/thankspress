@@ -60,14 +60,6 @@ class SettingsProfileForm(Form):
     bio = TextField("Bio", 
         validators = [  Length( max = 500, 
                                 message="Bio must be maximum 500 characters.")])
-    facebook_username = TextField("Facebook Username", 
-        validators = [  Length( max = 32, 
-                                message="Facebook Username must be maximum 32 characters. If yours is longer, please let us know.")])
-    is_facebook_visible = BooleanField("Facebook Visibility")
-    twitter_username = TextField("Twitter Username", 
-        validators = [  Length( max = 32, 
-                                message="Twitter Username must be maximum 32 characters.")])
-    is_twitter_visible = BooleanField("Twitter Visibility")
     website = TextField("Website", 
         validators = [  Length( max = 500, 
                                 message="Website must be maximum 500 characters.")])

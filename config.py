@@ -25,6 +25,10 @@ FORBIDDEN_USERNAMES = ('account', 'pages', 'public-pages', 'sign-in', 'sign-up',
 SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASEDIR, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
 
+# Upload
+UPLOAD_FOLDER = os.path.join(BASEDIR, 'app/static/uploads')
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+
 # WTF
 CSRF_ENABLED = True
 SECRET_KEY = 'thankspress'

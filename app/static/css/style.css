@@ -109,26 +109,34 @@ a:visited {
 	float: left;
 }
 
-#account_profile {
+#user_mini_profile {
 	width: 100%;
 	bottom: 1px solid #eee;
 	float: left;
 }
 
-#account_profile img {
+#user_mini_profile img {
 	display: block;
 	float: left;
 	height: 50px;
 	width: 50px;
 }
 
-#account_profile ul {
+#user_mini_profile ul {
 	float: left;
 	width: 125px;
 	padding-left: 5px;
 }
 
-#account_pages {
+#user_mini_profile .name {
+	font-size: 16px;
+}
+
+#user_mini_profile .username {
+	font-size: 14px;
+}
+
+#page_links {
 	float: left;
 	width: 100%;
 	margin-top: 10px;
@@ -136,17 +144,8 @@ a:visited {
 	border-top: 1px solid #eee;
 }
 
-#account_pages li {
+#page_links li {
 	line-height: 25px;
-}
-
-
-#content_sidebar .name {
-	font-size: 16px;
-}
-
-#content_sidebar .username {
-	font-size: 14px;
 }
 
 .content {

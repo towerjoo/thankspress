@@ -1,0 +1,15 @@
+<aside id="content_sidebar">
+    <div id="user_mini_profile">
+        <img src="">
+        <ul>
+            <li><a class="name" href="{{ url_for('user_timeline', username=g.user.username) }}">{{ g.user.profile.name }}</a></li>
+            <li><a class="username" href="{{ url_for('user_timeline', username=g.user.username) }}">{{ g.user.username }}</a></li>
+        </ul>
+    </div>
+    <ul id="page_links">
+        <li><a href="{{ url_for('settings_account') }}">Account</a></li>
+        <li><a href="{{ url_for('settings_emails') }}">Emails</a></li>
+        <li><a href="{{ url_for('settings_password_change') }}">Password</a></li>
+        <li><a href="{{ url_for('settings_profile') }}">Profile</a></li>
+    </ul>
+</aside>

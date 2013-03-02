@@ -24,22 +24,6 @@
 			        {{form.bio(cols = 32, rows = 20)}}<br>
 			    </p>
 				<p>
-			        Facebook Username:<br>
-			        {% for error in form.facebook_username.errors %}
-						<span style="color: red;">[{{error}}]</span><br>
-					{% endfor %}
-			        {{form.facebook_username()}}<br>
-			    </p>
-			    <p>{{form.is_facebook_visible}} Visible</p>
-				<p>
-			        Twitter Username:<br>
-			        {% for error in form.twitter_username.errors %}
-						<span style="color: red;">[{{error}}]</span><br>
-					{% endfor %}
-			        {{form.twitter_username()}}<br>
-			    </p>
-			    <p>{{form.is_twitter_visible}} Visible</p>
-				<p>
 			        Website:<br>
 			        {% for error in form.website.errors %}
 						<span style="color: red;">[{{error}}]</span><br>

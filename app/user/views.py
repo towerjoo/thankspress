@@ -1,4 +1,6 @@
-from flask import render_template, flash, redirect, url_for, g, session, request
+import os
+
+from flask import render_template, flash, redirect, url_for, g, session, request, send_from_directory
 from flask.ext.login import current_user, login_user, login_required, logout_user
 
 from app import app, db, lm
@@ -8,7 +10,9 @@ from app.user.forms import SettingsPasswordChangeForm, SettingsProfileForm, Sett
 from app.user.models import Email, Follow, User, UserProfile
 from app.functions import Functions
 
+from config import UPLOAD_FOLDER
 from datetime import datetime
+from werkzeug import secure_filename
 
 @lm.user_loader
 def load_user(id):
@@ -114,22 +118,9 @@ def settings_account():
         form = form,
         title = 'Account Settings for' + g.user.username)
 
-@app.route('/settings/change-password/', methods = ['GET', 'POST'])
+@app.route('/settings/account/deactivate/', methods = ['GET','POST'])
 @login_required
-def settings_change_password():
-    form = SettingsPasswordChangeForm(g.user)
-    if form.validate_on_submit():
-        g.user.change_password(form.new_password.data)
-        db.session.add(g.user)
-        db.session.commit()
-        flash('You have successfully changed your password.')
-    return render_template("user/settings_change_password.html",
-        form = form,
-        title = "Change Password")
-
-@app.route('/settings/deactivate/', methods = ['GET','POST'])
-@login_required
-def settings_deactivate():
+def settings_account_deactivate():
     form = SignInForm()
     if form.validate_on_submit():
         form.user.make_deactivated()
@@ -147,10 +138,6 @@ def settings_profile():
     if form.validate_on_submit():
         g.user.profile.name = form.name.data
         g.user.profile.bio = form.bio.data
-        g.user.profile.facebook_username = form.facebook_username.data
-        g.user.profile.is_facebook_visible = form.is_facebook_visible.data
-        g.user.profile.twitter_username = form.twitter_username.data
-        g.user.profile.is_twitter_visible = form.is_twitter_visible.data
         g.user.profile.website = form.website.data
         db.session.add(g.user.profile)
         db.session.commit()
@@ -159,14 +146,33 @@ def settings_profile():
     else:
         form.name.data = g.user.profile.name
         form.bio.data = g.user.profile.bio
-        form.facebook_username.data = g.user.profile.facebook_username
-        form.is_facebook_visible.data = g.user.profile.is_facebook_visible
-        form.twitter_username.data = g.user.profile.twitter_username
-        form.is_twitter_visible.data = g.user.profile.is_twitter_visible
         form.website.data = g.user.profile.website
     return render_template('user/settings_profile.html',
         form = form,
         title = 'Account Settings for' + g.user.username)
+
+@app.route('/settings/profile/picture/', methods = ['GET', 'POST'])
+def settings_profile_picture_upload():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and Functions.is_allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(UPLOAD_FOLDER, filename))
+            return redirect(url_for('uploaded_file', filename=filename))
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form action="" method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Upload>
+    </form>
+    '''
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'],
+                               filename)
 
 @app.route('/settings/emails/', methods = ['GET', 'POST'])
 @login_required
@@ -284,6 +290,19 @@ def settings_emails_verify_email(email = None):
                 flash('Verification key is not valid. Please request a new verification key and try again.')
     return redirect(url_for('settings_emails'))
 
+@app.route('/settings/password/change', methods = ['GET', 'POST'])
+@login_required
+def settings_password_change():
+    form = SettingsPasswordChangeForm(g.user)
+    if form.validate_on_submit():
+        g.user.change_password(form.new_password.data)
+        db.session.add(g.user)
+        db.session.commit()
+        flash('You have successfully changed your password.')
+    return render_template("user/settings_password_change.html",
+        form = form,
+        title = "Change Password")
+
 # Timeline -------------------------------------------------
 
 @app.route('/')
@@ -302,47 +321,47 @@ def user_timeline(username = None):
         return render_template('user/user_timeline.html',
             Follow = Follow,
             user = user,
-            title = user.username + "'s Timeline")
+            title = user.profile.name + "'s Timeline")
     return render_template('404.html'), 404
 
 @app.route('/<username>/following/')
 def user_following(username = None):
-    if username != None:
-        user = User.get_user_by_username(username)
-        if user != None and user.is_active():
-            return render_template('user/user_following.html', 
-                title = user.username + ' is following them.',
-                message = '/' + user.username + '/following')
+    user = User.get_user_by_username(username)
+    if user != None and user.is_active():
+        return render_template('user/user_following.html',
+            Follow = Follow,
+            user = user,
+            title = user.profile.name + " is following these pages.")
     return render_template('404.html'), 404
 
 @app.route('/<username>/followers/')
 def user_followers(username = None):
-    if username != None:
-        user = User.get_user_by_username(username)
-        if user != None and user.is_active():
-            return render_template('user/user_followers.html', 
-                title = 'They are following' + user.username,
-                message = '/' + user.username + '/followers')
+    user = User.get_user_by_username(username)
+    if user != None and user.is_active():
+        return render_template('user/user_followers.html',
+            Follow = Follow,
+            user = user,
+            title = user.profile.name + "'s Followers")
     return render_template('404.html'), 404
 
 @app.route('/<username>/thanks-given/')
 def user_thanks_given(username = None):
-    if username != None:
-        user = User.get_user_by_username(username)
-        if user != None and user.is_active():
-            return render_template('user/user_thanks_given.html', 
-                title = 'Thanks Given by' + user.username,
-                message = '/' + user.username + '/thanks-given')
+    user = User.get_user_by_username(username)
+    if user != None and user.is_active():
+        return render_template('user/user_thanks_given.html',
+            Follow = Follow,
+            user = user,
+            title = 'Thanks Given by ' + user.profile.name)
     return render_template('404.html'), 404
 
 @app.route('/<username>/thanks-received/')
 def user_thanks_received(username = None):
-    if username != None:
-        user = User.get_user_by_username(username)
-        if user != None and user.is_active():
-            return render_template('user/user_thanks_received.html', 
-                title = 'Thanks received by' + user.username,
-                message = '/' + user.username + '/thanks-received')
+    user = User.get_user_by_username(username)
+    if user != None and user.is_active():
+        return render_template('user/user_thanks_received.html',
+            Follow = Follow,
+            user = user,
+            title = 'Thanks Received by ' + user.profile.name)
     return render_template('404.html'), 404
 
 # User Follows ---------------------------------------------
