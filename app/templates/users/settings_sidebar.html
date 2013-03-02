@@ -1,6 +1,10 @@
 <aside id="content_sidebar">
     <div id="user_mini_profile">
-        <img src="">
+        <img src="  {% if g.user.profile.picture_id != None %}
+                        {{ url_for('media', id = g.user.profile.picture_id) }}
+                    {% else %}
+                        /static/img/profile_pic.png
+                    {% endif %}">        
         <ul>
             <li><a class="name" href="{{ url_for('user_timeline', username=g.user.username) }}">{{ g.user.profile.name }}</a></li>
             <li><a class="username" href="{{ url_for('user_timeline', username=g.user.username) }}">{{ g.user.username }}</a></li>
