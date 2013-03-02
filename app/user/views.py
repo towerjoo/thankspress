@@ -107,7 +107,7 @@ def settings_account():
         db.session.add(g.user)
         db.session.commit()
         flash('Changes have been saved.')
-        return redirect(url_for('settings'))
+        return redirect(url_for('settings_account'))
     else:
         form.username.data = g.user.username
     return render_template('user/settings_account.html',
@@ -349,7 +349,7 @@ def user_thanks_received(username = None):
 
 @app.route('/users/follow/<int:followed_id>/')
 @login_required
-def user_follow(followed_id):
+def users_follow(followed_id):
     user = User.get_user(followed_id)
     if user != None and not user.is_deleted():
         if not Follow.is_following_by_follower_and_followed(g.user.id, user.id):
@@ -362,7 +362,7 @@ def user_follow(followed_id):
 
 @app.route('/users/unfollow/<int:followed_id>/')
 @login_required
-def user_unfollow(followed_id):
+def users_unfollow(followed_id):
     user = User.get_user(followed_id)
     if user != None and not user.is_deleted():
         follow = Follow.get_follow_by_follower_and_followed(g.user.id, user.id)

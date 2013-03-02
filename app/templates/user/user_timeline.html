@@ -11,9 +11,9 @@
 				<span class="content_buttons">
 					{% if user != g.user %} 
 						{% if Follow.is_following_by_follower_and_followed(g.user.id, user.id) %}
-							<a href="{{url_for('unfollow', followed_id = user.id)}}">Unfollow</a>
+							<a href="{{url_for('users_unfollow', followed_id = user.id)}}">Unfollow</a>
 						{% else %}
-							<a href="{{url_for('follow', followed_id = user.id)}}">Follow</a>
+							<a href="{{url_for('users_follow', followed_id = user.id)}}">Follow</a>
 						{% endif %}
 					{% endif %}
 				</span>
