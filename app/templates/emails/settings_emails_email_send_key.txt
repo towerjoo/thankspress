@@ -1,0 +1,7 @@
+Dear {{g.user.profile.name}}
+
+Here is your verification link for {{email.email}}:
+{{url_for('settings_emails_email_verify', email = email.email, _external = True)}}?key={{ email.verification_key }}
+
+Regards,
+ThanksRobot from ThanksPress

@@ -1,0 +1,9 @@
+Dear {{email.user.profile.name}},
+
+ThanksPress welcomes you.
+
+Please verify that you own {{email.email}} by using this verification link:
+{{url_for('settings_emails_email_verify', email = email.email, _external = True)}}?key={{ email.verification_key }}
+
+Regards,
+ThanksRobot from ThanksPress

@@ -10,44 +10,22 @@ from app.media.models import Media
 from app.media.choices import MediaTypeChoices
 
 from app.user.forms import SettingsPasswordChangeForm, SettingsProfileForm, SettingsProfilePictureForm, \
-    SettingsEmailsForm, SettingsAccountPickUsernameForm, SettingsAccountForm, SignInForm, SignUpForm
+    SettingsEmailsForm, SettingsAccountPickUsernameForm, SettingsAccountForm, SignInForm, SignUpForm, \
+    SettingsEmailsEmailVerifyForm
 from app.user.models import Email, Follow, User, UserProfile
 
 from config import UPLOAD_FOLDER
 from datetime import datetime
 from werkzeug import secure_filename
 
-@lm.user_loader
-def load_user(id):
-    return User.get_user(int(id))
 
-@app.before_request
-def before_request():
-    g.user = current_user
-    if g.user.is_authenticated():
-        g.user.date_last_acted = datetime.utcnow()
-        db.session.add(g.user)
-        db.session.commit()
-        if g.user.is_activated():
-            pass
-        elif g.user.is_new() and request.endpoint != 'sign_out':
-            form = SettingsAccountPickUsernameForm()
-            if form.validate_on_submit():
-                g.user.username = form.username.data
-                g.user.make_activated()
-                db.session.add(g.user)
-                db.session.commit()
-                flash('Welcome to ThanksPress!')
-                return redirect(url_for('user_timeline', username = g.user.username))
-            else:
-                return render_template('users/settings_account_pick_username.html',
-                    form = form,
-                    title = 'Pick Username')
-        elif g.user.is_deactivated():
-            g.user.make_activated()
-            db.session.add(g.user)
-            db.session.commit()
-            flash('Great to see you back!')
+# News Feed -------------------------------------------------
+
+@app.route('/')
+def news_feed():
+    return render_template('users/news_feed.html',
+        title = 'news-feed',
+        message = '/news-feed')
 
 # Registration -------------------------------------
 
@@ -225,11 +203,21 @@ def settings_emails_email_send_key(email):
             flash('%s is reported. It cannot be verified until case is resolved.' % (email.email))
     return redirect(url_for('settings_emails'))
 
-@app.route('/settings/emails/<email>/verify/')
-@login_required
+@app.route('/settings/emails/<email>/verify/', methods = ['GET', 'POST'])
 def settings_emails_email_verify(email = None):
+    if g.user.is_anonymous():
+        form = SignInForm()
+        if not form.validate_on_submit():
+            return render_template('users/settings_emails_email_verify.html',
+                form = form,
+                title = 'Sign In')
+        login_user(form.user, remember = form.remember_me.data)
+        g.user.date_last_signed_in = datetime.utcnow()
+        db.session.add(g.user)
+        db.session.commit()
+
     if not functions.is_email(email):
-        pass
+        return request.path
     elif request.args.get("key") == None or len(request.args.get("key")) != 32:
         flash('Verification key could not be detected. You may have a broken link.')
     else:
@@ -261,7 +249,7 @@ def settings_password_change():
         db.session.add(g.user)
         db.session.commit()
         flash('You have successfully changed your password.')
-    return render_template("user/settings_password_change.html",
+    return render_template("users/settings_password_change.html",
         form = form,
         title = "Change Password")
 
@@ -310,14 +298,6 @@ def settings_profile_picture():
 @app.route('/settings/profile/picture/redirect/')
 def settings_profile_picture_redirect():
     return redirect(url_for('settings_profile_picture'))
-
-# Timeline -------------------------------------------------
-
-@app.route('/')
-def news_feed():
-    return render_template('users/news_feed.html',
-        title = 'news-feed',
-        message = '/news-feed')
 
 # User Pages -----------------------------------------------
 
@@ -448,3 +428,40 @@ def internal_error(error):
 def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
+
+# Other Stuff ---------------------------------------------
+
+@lm.user_loader
+def load_user(id):
+    return User.get_user(int(id))
+
+@app.before_request
+def before_request():
+    g.user = current_user
+    if g.user.is_authenticated():
+        g.user.date_last_acted = datetime.utcnow()
+        db.session.add(g.user)
+        db.session.commit()
+        if  g.user.is_activated() or \
+            request.endpoint in ['sign_out', 'settings_emails_email_verify']:
+            pass
+        elif g.user.is_new():
+            form = SettingsAccountPickUsernameForm()
+            if form.validate_on_submit():
+                g.user.username = form.username.data
+                g.user.make_activated()
+                db.session.add(g.user)
+                db.session.commit()
+                flash('Welcome to ThanksPress!')
+                return redirect(url_for('user_timeline', username = g.user.username))
+            return render_template('users/settings_account_pick_username.html',
+                form = form,
+                title = 'Pick Username')
+        elif g.user.is_deactivated():
+            g.user.make_activated()
+            db.session.add(g.user)
+            db.session.commit()
+            flash('Great to see you back!')
+        elif g.user.is_deleted():
+            flash("Your account is deleted.")
+            return redirect(url_for('sign_out'))

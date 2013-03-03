@@ -40,8 +40,8 @@
                         {% if g.user.is_authenticated() %}
                             {% if g.user.is_new() %}
                             {% else %}
-                                <li class="text">
-                                    <a href="{{url_for('user_timeline',username = g.user.username)}}">Profile</a>
+                                <li>
+                                    <a href="{{url_for('user_timeline',username = g.user.username)}}">{{g.user.username}}</a>
                                 </li>
                                 <li class="text">
                                     <a href="{{url_for('settings_account')}}">

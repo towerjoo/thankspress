@@ -2,8 +2,8 @@ from app import functions
 from app.user.models import Email as EmailModel, User as UserModel
 from config import IMAGE_TYPES
 
-from flask.ext.wtf import BooleanField, Email, EqualTo, FileField, file_allowed, \
-    file_required, Form, Length, PasswordField, Required, TextField
+from flask.ext.wtf import BooleanField, Email, EqualTo, FileField, HiddenField, \
+    Form, Length, PasswordField, Required, TextField
 
 # Account -----------------------------------------
 class SettingsAccountPickUsernameForm(Form):
@@ -50,7 +50,6 @@ class SettingsEmailsForm(Form):
                         Length( max = 320, 
                                 message = "Email must be maximum 320 characters."),
                         Email()])
-
 
 # Profile ----------------------------------------
 class SettingsProfileForm(Form):
@@ -110,6 +109,9 @@ class SignInForm(Form):
         self.user = user
         return True
 
+class SettingsEmailsEmailVerifyForm(SignInForm):
+    email_to_be_verified = HiddenField()
+    email_verification_key = HiddenField()
 
 class SignUpForm(Form):
     name = TextField("Name", 
