@@ -5,7 +5,38 @@
 	<div class="inner min_height">
         {% include "users/user_sidebar.html" %}
         <div class="content">
-            Followers
+            <ul>
+                {% for follower in user.followers.all() %}
+                    {% if user != follower %}
+                    <li>
+                        <img src="  {% if follower.profile.picture_id != None %}
+                                    {{ url_for('media', id = follower.profile.picture_id ) }}
+                                    {% endif %}" />
+                        <div>
+                            {{ follower.profile.name }}
+                            <br>
+                            {{ follower.username }}
+                        </div>
+                        <div>               
+                            {% if g.user.is_authenticated() %}
+                                <span class="content_buttons">
+                                {% if Follow.is_following_by_follower_and_followed(g.user.id, follower.id) %}
+                                    <a href="{{url_for('users_unfollow', followed_id = follower.id)}}">
+                                        Unfollow
+                                    </a>
+                                 {% else %}
+                                    <a href="{{url_for('users_follow', followed_id = follower.id)}}">
+                                        Follow
+                                    </a>
+                                {% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <hr>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>

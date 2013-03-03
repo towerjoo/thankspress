@@ -131,51 +131,9 @@ def settings_account_deactivate():
         db.session.add(form.user)
         db.session.commit()
         return sign_out()
-    return render_template('users/settings_deactivate.html',
+    return render_template('users/settings_account_deactivate.html',
         form = form,
         title = 'Deactivate Account')
-
-@app.route('/settings/profile/', methods = ['GET', 'POST'])
-@login_required
-def settings_profile():
-    form = SettingsProfileForm()
-    if form.validate_on_submit():
-        g.user.profile.name = form.name.data
-        g.user.profile.bio = form.bio.data
-        g.user.profile.website = form.website.data
-        db.session.add(g.user.profile)
-        db.session.commit()
-        flash('Changes have been saved.')
-        return redirect(url_for('settings_profile'))
-    else:
-        form.name.data = g.user.profile.name
-        form.bio.data = g.user.profile.bio
-        form.website.data = g.user.profile.website
-    return render_template('users/settings_profile.html',
-        form = form,
-        title = 'Account Settings for' + g.user.username)
-
-@app.route('/settings/profile/picture/', methods = ['GET', 'POST'])
-@login_required
-def settings_profile_picture():
-    form = SettingsProfilePictureForm()
-    if form.validate_on_submit():
-        # Generate new filename then save picture
-        filename = str(g.user.id) + '.' + str(datetime.utcnow()) + '.png'
-        form.picture.data.save(os.path.join(UPLOAD_FOLDER, filename))
-        # Create Media
-        media = Media(MediaTypeChoices.PROFILE_PICTURE, filename)
-        db.session.add(media)
-        db.session.commit()
-        # Upload User Profile Picture
-        g.user.profile.picture_id = media.id
-        db.session.add(g.user.profile)
-        db.session.commit()
-        # Redirect to Profile Picture Page
-        return redirect(url_for('settings_profile_picture'))
-    return render_template('users/settings_profile_picture.html',
-        form = form,
-        title = 'Profile Picture Settings')
 
 @app.route('/settings/emails/', methods = ['GET', 'POST'])
 @login_required
@@ -305,6 +263,52 @@ def settings_password_change():
     return render_template("user/settings_password_change.html",
         form = form,
         title = "Change Password")
+
+@app.route('/settings/profile/', methods = ['GET', 'POST'])
+@login_required
+def settings_profile():
+    form = SettingsProfileForm()
+    if form.validate_on_submit():
+        g.user.profile.name = form.name.data
+        g.user.profile.bio = form.bio.data
+        g.user.profile.website = form.website.data
+        db.session.add(g.user.profile)
+        db.session.commit()
+        flash('Changes have been saved.')
+        return redirect(url_for('settings_profile'))
+    else:
+        form.name.data = g.user.profile.name
+        form.bio.data = g.user.profile.bio
+        form.website.data = g.user.profile.website
+    return render_template('users/settings_profile.html',
+        form = form,
+        title = 'Account Settings for' + g.user.username)
+
+@app.route('/settings/profile/picture/', methods = ['GET', 'POST'])
+@login_required
+def settings_profile_picture():
+    form = SettingsProfilePictureForm()
+    if form.validate_on_submit():
+        # Generate new filename then save picture
+        filename = str(g.user.id) + '.' + str(datetime.utcnow()) + '.png'
+        form.picture.data.save(os.path.join(UPLOAD_FOLDER, filename))
+        # Create Media
+        media = Media(MediaTypeChoices.PROFILE_PICTURE, filename)
+        db.session.add(media)
+        db.session.commit()
+        # Upload User Profile Picture
+        g.user.profile.picture_id = media.id
+        db.session.add(g.user.profile)
+        db.session.commit()
+        # Redirect to Profile Picture Page
+        return redirect(url_for('settings_profile_picture_redirect'))
+    return render_template('users/settings_profile_picture.html',
+        form = form,
+        title = 'Profile Picture Settings')
+
+@app.route('/settings/profile/picture/redirect/')
+def settings_profile_picture_redirect():
+    return redirect(url_for('settings_profile_picture'))
 
 # Timeline -------------------------------------------------
 
