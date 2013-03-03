@@ -16,7 +16,7 @@ def send_email(subject, sender, recipients, text_body, html_body):
 	send_async_email(msg)
 
 def follower_notification(follower, followed):
-    send_email("ThanksPress %s is now following you!" % follower.username,
+    send_email("%s is now following you." % follower.username,
         ADMINS[0],
         [followed.get_primary_email().email],
         render_template("emails/follower_notification.txt", 
@@ -24,11 +24,47 @@ def follower_notification(follower, followed):
         render_template("emails/follower_notification.html", 
             user = followed, follower = follower))
 
-def email_verification(email):
-    send_email("ThanksPress email verification.",
+def sign_up(email):
+    send_email("Welcome to ThanksPress!",
         ADMINS[0],
         [email.email],
-        render_template("emails/email_verification.txt", 
+        render_template("emails/sign_up.txt", 
             email = email),
-        render_template("emails/email_verification.html", 
+        render_template("emails/sign_up.html", 
+            email = email))
+
+def settings_emails_email_add(email):
+    send_email("New Email Added.",
+        ADMINS[0],
+        [email.email],
+        render_template("emails/settings_emails_email_add.txt", 
+            email = email),
+        render_template("emails/settings_emails_email_add.html", 
+            email = email))
+
+# def settings_emails_email_delete(email):
+#     send_email("ThanksPress email verification.",
+#         ADMINS[0],
+#         [email.email],
+#         render_template("emails/email_verification.txt", 
+#             email = email),
+#         render_template("emails/email_verification.html", 
+#             email = email))
+
+# def settings_emails_email_make_primary(email):
+#     send_email("ThanksPress email verification.",
+#         ADMINS[0],
+#         [email.email],
+#         render_template("emails/email_verification.txt", 
+#             email = email),
+#         render_template("emails/email_verification.html", 
+#             email = email))
+
+def settings_emails_email_send_key(email):
+    send_email("Email Verification Key.",
+        ADMINS[0],
+        [email.email],
+        render_template("emails/settings_emails_email_send_key.txt", 
+            email = email),
+        render_template("emails/settings_emails_email_send_key.html", 
             email = email))

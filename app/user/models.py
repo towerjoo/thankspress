@@ -1,5 +1,5 @@
 from app import db
-from app.functions import Functions
+from app import functions
 from app.public_page.choices import PublicPageStatusChoices
 from app.thank.choices import ThankCommentStatusChoices, ThankStatusChoices, \
     ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices
@@ -32,7 +32,7 @@ class Email(db.Model):
         self.is_primary = is_primary
         self.status = status
         self.date_registered = datetime.utcnow()
-        self.verification_key = Functions.generate_key(email)
+        self.verification_key = functions.generate_key(email)
 
     def __repr__(self):
         return '<Email %r>' % (self.id)
@@ -53,7 +53,7 @@ class Email(db.Model):
 
     def make_not_verified(self):
         self.status = EmailStatusChoices.NOT_VERIFIED
-        self.verification_key = Functions.generate_key(self.mail)
+        self.verification_key = functions.generate_key(self.mail)
         return self
 
     def is_verified(self):
@@ -287,7 +287,7 @@ class User(db.Model):
         return self
 
     def set_password_reset_key(self):
-        self.password_reset_key = Functions.generate_key(email)
+        self.password_reset_key = functions.generate_key(email)
         self.password_reset_key_expiration_date = datetime.utcnow() + timedelta(days=1)
         return self
 
@@ -358,14 +358,15 @@ class UserProfile(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
     name = db.Column(db.String(32), nullable = False)
-    
-    picture_id = db.Column(db.Integer, db.ForeignKey("media.id"))
+    picture_id = db.Column(db.Integer, db.ForeignKey("media.id"), nullable = False)
+
     bio = db.Column(db.String(500))
     website = db.Column(db.String(500))
 
-    def __init__(self, user_id, name):
+    def __init__(self, user_id, name, picture_id = 1):
         self.user_id = user_id
         self.name = name
+        self.picture_id = picture_id
 
     def __repr__(self):
         return "<Profile %r - %s>" % (self.user_id, self.name)

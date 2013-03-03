@@ -1,4 +1,4 @@
-from app.functions import Functions
+from app import functions
 from app.user.models import Email as EmailModel, User as UserModel
 from config import IMAGE_TYPES
 
@@ -74,7 +74,7 @@ class SettingsProfilePictureForm(Form):
         if not rv:
             return False
 
-        if self.picture.data != None and Functions.is_image_type(self.picture.data.filename):
+        if self.picture.data != None and functions.is_image_type(self.picture.data.filename):
             return True
         self.picture.errors.append('Image files only.')
         return False
@@ -98,7 +98,7 @@ class SignInForm(Form):
         if not rv:
             return False
 
-        if Functions.is_email(self.email.data):
+        if functions.is_email(self.email.data):
             user = UserModel.sign_in_by_email(self.email.data, self.password.data)
         else:
             user = UserModel.sign_in_by_username(self.email.data, self.password.data)

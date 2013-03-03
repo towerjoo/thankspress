@@ -26,7 +26,7 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(BASEDIR, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(BASEDIR, 'db_repository')
 
 # Upload
-UPLOAD_FOLDER = os.path.join(BASEDIR, 'uploads')
+UPLOAD_FOLDER = os.path.join(BASEDIR, 'media_uploads')
 IMAGE_TYPES = tuple('jpg jpe jpeg png gif svg bmp'.split())
 
 # WTF

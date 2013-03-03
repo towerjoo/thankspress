@@ -4,8 +4,7 @@ from flask import abort, render_template, flash, redirect, url_for, g, session, 
 from flask.ext.login import current_user, login_user, login_required, logout_user
 
 from app import app, db, lm
-from app.emails import email_verification, follower_notification
-from app.functions import Functions
+from app import emails, functions
 
 from app.media.models import Media
 from app.media.choices import MediaTypeChoices
@@ -95,6 +94,8 @@ def sign_up():
         follow = Follow(follower_id = user.id, followed_id = user.id)
         db.session.add(follow)
         db.session.commit()
+        #Send welcome email
+        emails.sign_up(email)
         #Redirect to Sign In
         flash('You have successfully signed up for ThanksPress.')
         return redirect(url_for('sign_in'))
@@ -140,21 +141,21 @@ def settings_account_deactivate():
 def settings_emails():
     form = SettingsEmailsForm()
     if form.validate_on_submit():
-        return redirect(url_for('settings_emails_add_email', email = form.email.data))
+        return redirect(url_for('settings_emails_email_add', email = form.email.data))
     return render_template('users/settings_emails.html',
         form = form, 
         title = 'Manage Emails')
 
-@app.route('/settings/emails/add/<email>/')
+@app.route('/settings/emails/<email>/add/')
 @login_required
-def settings_emails_add_email(email = None):
-    if email != None and Functions.is_email(email):
+def settings_emails_email_add(email):
+    if functions.is_email(email):
         email_object = Email.get_email_by_email(email)
         if email_object == None:
             email = Email(email = email, user_id = g.user.id)
             db.session.add(email)
             db.session.commit()
-            email_verification(email)
+            emails.settings_emails_email_add(email)
             flash('%s has been successfully added.' % (email.email)) 
         else:
             if email_object.user == g.user:
@@ -163,10 +164,10 @@ def settings_emails_add_email(email = None):
                 flash('%s registered by another user.' % (email_object.email)) 
     return redirect(url_for('settings_emails'))
 
-@app.route('/settings/emails/delete/<email>/')
+@app.route('/settings/emails/<email>/delete/')
 @login_required
-def settings_emails_delete_email(email = None):
-    if email != None and Functions.is_email(email):
+def settings_emails_email_delete(email):
+    if functions.is_email(email):
         email = Email.get_email_by_email(email)
         if email == None:
             flash('Unregistered email cannot be deleted.')
@@ -181,10 +182,10 @@ def settings_emails_delete_email(email = None):
             flash('%s has been successfully deleted.' % (email.email))
     return redirect(url_for('settings_emails'))
 
-@app.route('/settings/emails/make-primary/<email>/')
+@app.route('/settings/emails/<email>/make-primary/')
 @login_required
-def settings_emails_make_primary_email(email = None):
-    if email != None and Functions.is_email(email):
+def settings_emails_email_make_primary(email):
+    if functions.is_email(email):
         email = Email.get_email_by_email(email)
         if email == None:
             flash('Unregistered email cannot be primary email.')
@@ -204,10 +205,10 @@ def settings_emails_make_primary_email(email = None):
             flash('%s has been successfully made your primary email.' % (email.email))
     return redirect(url_for('settings_emails'))
 
-@app.route('/settings/emails/request-key/<email>/')
+@app.route('/settings/emails/<email>/send-key/')
 @login_required
-def settings_emails_request_key_email(email = None):
-    if email == None or not Functions.is_email(email):
+def settings_emails_email_send_key(email):
+    if not functions.is_email(email):
         pass
     else:
         email = Email.get_email_by_email(email)
@@ -216,7 +217,7 @@ def settings_emails_request_key_email(email = None):
         elif email not in g.user.emails:
             pass
         elif email.is_not_verified():
-            email_verification(email)
+            emails.settings_emails_email_send_key(email)
             flash('We sent your email verification to %s. Please check your inbox for verification instructions.' % (email.email))
         elif email.is_verified():
             flash('%s is already verified.' % (email.email))
@@ -224,10 +225,10 @@ def settings_emails_request_key_email(email = None):
             flash('%s is reported. It cannot be verified until case is resolved.' % (email.email))
     return redirect(url_for('settings_emails'))
 
-@app.route('/settings/emails/verify/<email>/')
+@app.route('/settings/emails/<email>/verify/')
 @login_required
-def settings_emails_verify_email(email = None):
-    if email == None or not Functions.is_email(email):
+def settings_emails_email_verify(email = None):
+    if not functions.is_email(email):
         pass
     elif request.args.get("key") == None or len(request.args.get("key")) != 32:
         flash('Verification key could not be detected. You may have a broken link.')
@@ -289,11 +290,11 @@ def settings_profile():
 def settings_profile_picture():
     form = SettingsProfilePictureForm()
     if form.validate_on_submit():
-        # Generate new filename then save picture
-        filename = str(g.user.id) + '.' + str(datetime.utcnow()) + '.png'
-        form.picture.data.save(os.path.join(UPLOAD_FOLDER, filename))
+        # Generate new filename with path then save picture
+        path = 'PROFILE_PICTURE/' + str(g.user.id) + '.' + str(datetime.utcnow()) + '.png'
+        form.picture.data.save(os.path.join(UPLOAD_FOLDER, path))
         # Create Media
-        media = Media(MediaTypeChoices.PROFILE_PICTURE, filename)
+        media = Media(type = MediaTypeChoices.PROFILE_PICTURE, path = path)
         db.session.add(media)
         db.session.commit()
         # Upload User Profile Picture

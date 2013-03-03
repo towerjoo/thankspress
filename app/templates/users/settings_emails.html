@@ -21,17 +21,17 @@
 				<p>
 					{{email.email}} |
 					{% if not email.is_verified() %}
-						<a href="{{url_for('settings_emails_request_key_email', email = email.email)}}">
+						<a href="{{url_for('settings_emails_email_send_key', email = email.email)}}">
 							Verify
 						</a> |
 					{% endif %}
 					{% if email.is_primary %}
 						(Primary Email) 
 					{% else %} 
-						<a href="{{url_for('settings_emails_make_primary_email', email = email.email)}}">
+						<a href="{{url_for('settings_emails_email_make_primary', email = email.email)}}">
 							Make Primary
 						</a> | 
-						<a href="{{url_for('settings_emails_delete_email', email = email.email)}}">
+						<a href="{{url_for('settings_emails_email_delete', email = email.email)}}">
 							Delete
 						</a>
 					{% endif %}
