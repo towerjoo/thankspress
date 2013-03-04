@@ -3,7 +3,25 @@
 {% block content %}
 <div id="content">
 	<div class="inner min_height">
-		{{message}}
+		<p><img style="max-width:50px;max-height:50px;" src="{{ url_for('media', id=thank.giver.profile.picture_id) }}"> {{thank.giver.profile.name}} thanks to:</p>
+
+        {% if thank.media_id != None %}
+        <p>
+            {% if thank.media.type == 1 %}
+            <img style="max-width:800px;max-height:800px;" src="{{url_for('media', id = thank.media_id)}}" />
+            {% endif %}
+        </p>
+        {% endif %}
+
+        {% if thank.message != None %}
+        <p>{{ thank.message }}</p>
+        {% endif %}
+
+        {% for comment in thank.comments.all() %}
+        <hr>
+        <p>{{comment.commenter_id}}</p>
+        <p>{{comment.comment}}</p>
+        {% endfor %}
 	</div>
 </div>
 {% endblock %}

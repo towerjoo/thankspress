@@ -207,14 +207,15 @@ def settings_emails_email_send_key(email):
 def settings_emails_email_verify(email = None):
     if g.user.is_anonymous():
         form = SignInForm()
-        if not form.validate_on_submit():
+        if form.validate_on_submit():
+            login_user(form.user, remember = form.remember_me.data)
+            g.user.date_last_signed_in = datetime.utcnow()
+            db.session.add(g.user)
+            db.session.commit()
+        else:
             return render_template('users/settings_emails_email_verify.html',
                 form = form,
                 title = 'Sign In')
-        login_user(form.user, remember = form.remember_me.data)
-        g.user.date_last_signed_in = datetime.utcnow()
-        db.session.add(g.user)
-        db.session.commit()
 
     if not functions.is_email(email):
         return request.path
@@ -363,7 +364,7 @@ def users_follow(followed_id):
             follow = Follow(g.user.id, user.id)
             db.session.add(follow)
             db.session.commit()
-            follower_notification(g.user, user)
+            emails.follower_notification(g.user, user)
         return redirect(url_for('user_timeline', username = user.username))
     abort(404)
 

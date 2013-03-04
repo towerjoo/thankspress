@@ -1,5 +1,3 @@
-#!/venv/bin/python
-
 import os
 import unittest
 from hashlib import md5
@@ -156,7 +154,96 @@ class TestCase(BaseTestCase):
         assert len(u3.thanks_received.all()) == 2
         assert len(u4.thanks_received.all()) == 1
 
+        # delete thank to user
+            # number of thanks_received decreases
+
+        t2u1.make_deleted()
+        db.session.add(t2u1)
+        db.session.commit()
+
+        assert len(u1.thanks_received.all()) == 3
+        assert len(u2.thanks_received.all()) == 3
+        assert len(u3.thanks_received.all()) == 2
+        assert len(u4.thanks_received.all()) == 1
+
+        # make four emails
+
+        e5 = Email(email = 'fight@fight.com')
+        e6 = Email(email = 'go@go.com')
+        e7 = Email(email = 'further@further.com')
+        e8 = Email(email = 'win@win.com')
+
+        db.session.add(e5)
+        db.session.add(e6)
+        db.session.add(e7)
+        db.session.add(e8)
+        db.session.commit()
+
+        # thank to emails
+
+        t1e5 = ThankReceivedByEmail(t1.id, e5.id)
+        t1e6 = ThankReceivedByEmail(t1.id, e6.id)
+        t1e7 = ThankReceivedByEmail(t1.id, e7.id)
+        t1e8 = ThankReceivedByEmail(t1.id, e8.id)
+
+        t2e5 = ThankReceivedByEmail(t2.id, e5.id)
+        t2e6 = ThankReceivedByEmail(t2.id, e6.id)
+        t2e7 = ThankReceivedByEmail(t2.id, e7.id)
+
+        t3e5 = ThankReceivedByEmail(t3.id, e5.id)
+        t3e6 = ThankReceivedByEmail(t3.id, e6.id)
+
+        t4e5 = ThankReceivedByEmail(t4.id, e5.id)
+
+        db.session.add(t1e5)
+        db.session.add(t1e6)
+        db.session.add(t1e7)
+        db.session.add(t1e8)
+        db.session.add(t2e5)
+        db.session.add(t2e6)
+        db.session.add(t2e7)
+        db.session.add(t3e5)
+        db.session.add(t3e6)
+        db.session.add(t4e5)
+        db.session.commit()
+
+        assert len(e5.thanks_received.all()) == 4
+        assert len(e6.thanks_received.all()) == 3
+        assert len(e7.thanks_received.all()) == 2
+        assert len(e8.thanks_received.all()) == 1
+
+        # email added to a user's account
+
+        e5.user_id = u1.id
+        db.session.add(e5)
+        for thank in e5.thanks_received.all():
+            if thank not in e5.user.thanks_received.all():
+                thank_received_by_user = ThankReceivedByUser(thank_id = thank.id, receiver_id = e5.user_id)
+                db.session.add(thank_received_by_user)
+                db.session.commit()
+            thank_received_by_email = ThankReceivedByEmail.get_thank_received_by_email_by_thank_and_receiver(thank.id, e5.id)
+            thank_received_by_email.make_migrated(e5.user_id)
+            db.session.add(thank_received_by_email)
+            db.session.commit()
+
+        assert len(e5.thanks_received.all()) == 4
+        assert len(u1.thanks_received.all()) == 4
+        print u1.thanks_received.order_by(Thank.date_registered).all()
+
+        # delete thank to email
+            # number of thanks_received decreases
+
+        t2e5.make_deleted()
+        db.session.add(t2e5)
+        db.session.commit()
+
+        assert len(e5.thanks_received.all()) == 3
+        assert len(e6.thanks_received.all()) == 3
+        assert len(e7.thanks_received.all()) == 2
+        assert len(e8.thanks_received.all()) == 1
+
         # delete thank
+            # number of thanks_received decreases
 
         t1.make_deleted()
         db.session.add(t1)
@@ -167,86 +254,14 @@ class TestCase(BaseTestCase):
         assert len(u3.thanks_received.all()) == 1
         assert len(u4.thanks_received.all()) == 0
 
-        # delete thank to user
+        assert len(e5.thanks_received.all()) == 2
+        assert len(e6.thanks_received.all()) == 2
+        assert len(e7.thanks_received.all()) == 1
+        assert len(e8.thanks_received.all()) == 0
 
-        t2u1.make_deleted()
-        db.session.add(t2u1)
-        db.session.commit()
 
-        assert len(u1.thanks_received.all()) == 2
-        assert len(u2.thanks_received.all()) == 2
-        assert len(u3.thanks_received.all()) == 1
-        assert len(u4.thanks_received.all()) == 0
+        assert all(email in t1.receiver_emails.all() for email in [e5,e6,e7,e8])
 
-        # follow users
-
-        u1u1 = Follow(u1.id, u1.id)
-        u1u2 = Follow(u1.id, u2.id)
-        u1u3 = Follow(u1.id, u3.id)
-        u1u4 = Follow(u1.id, u4.id)
-
-        u2u1 = Follow(u2.id, u1.id)
-        u2u2 = Follow(u2.id, u2.id)
-        u2u3 = Follow(u2.id, u3.id)
-
-        u3u1 = Follow(u3.id, u1.id)
-        u3u2 = Follow(u3.id, u2.id)
-
-        u4u1 = Follow(u4.id, u1.id)
-
-        db.session.add(u1u1)
-        db.session.add(u1u2)
-        db.session.add(u1u3)
-        db.session.add(u1u4)
-        db.session.add(u2u1)
-        db.session.add(u2u2)
-        db.session.add(u2u3)
-        db.session.add(u3u1)
-        db.session.add(u3u2)
-        db.session.add(u4u1)
-        db.session.commit()
-
-        assert len(u1.following.all()) == 4
-        assert len(u2.following.all()) == 3
-        assert len(u3.following.all()) == 2
-        assert len(u4.following.all()) == 1
-
-        # unfollow users
-
-        u1u1.make_deleted()
-        u2u2.make_deleted()
-
-        db.session.add(u1u1)
-        db.session.add(u2u2)
-        db.session.commit()
-
-        assert len(u1.following.all()) == 3
-        assert len(u2.following.all()) == 2
-        assert len(u3.following.all()) == 2
-        assert len(u4.following.all()) == 1
-
-        # change user statuses
-
-        u2.make_deactivated()
-        u3.make_deleted()
-
-        db.session.add(u3)
-        db.session.add(u4)
-        db.session.commit()
-
-        assert u2.is_deactivated() == True
-        assert u2.is_activated() == False
-        assert u2.is_active() == True
-        assert u3.is_deleted() == True
-        assert u3.is_not_deleted() == False
-
-        assert u2 in u1.following.all()
-        assert u3 not in u1.following.all()
-
-        assert len(u1.following.all()) == 2
-        assert len(u2.following.all()) == 1
-        assert len(u3.following.all()) == 2
-        assert len(u4.following.all()) == 1
 
 if __name__ == '__main__':
     unittest.main()

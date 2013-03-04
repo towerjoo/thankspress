@@ -1,5 +1,3 @@
-#!venv/bin/python
-
 from app import db
 from app.media.models import Media
 from app.media.choices import MediaTypeChoices

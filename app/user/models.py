@@ -13,11 +13,12 @@ class Email(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
     email = db.Column(db.String(320), nullable = False)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
     is_primary = db.Column(db.Boolean, nullable = False)
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
     verification_key = db.Column(db.String(32)) # To be deleted once verified
+
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
     thanks_received = db.relationship('Thank',
         secondary = 'thank_received_by_email', 
@@ -26,7 +27,7 @@ class Email(db.Model):
         backref = db.backref('receiver_emails', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
-    def __init__(self, email, user_id, is_primary = False, status = EmailStatusChoices.NOT_VERIFIED):
+    def __init__(self, email, user_id = None, is_primary = False, status = EmailStatusChoices.NOT_VERIFIED):
         self.email = email
         self.user_id = user_id
         self.is_primary = is_primary

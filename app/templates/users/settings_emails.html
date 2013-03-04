@@ -27,10 +27,12 @@
 					{% endif %}
 					{% if email.is_primary %}
 						(Primary Email) 
-					{% else %} 
-						<a href="{{url_for('settings_emails_email_make_primary', email = email.email)}}">
-							Make Primary
-						</a> | 
+					{% else %}
+						{% if email.is_verified() %} 
+							<a href="{{url_for('settings_emails_email_make_primary', email = email.email)}}">
+								Make Primary
+							</a> |
+						{% endif %}
 						<a href="{{url_for('settings_emails_email_delete', email = email.email)}}">
 							Delete
 						</a>

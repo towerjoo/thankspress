@@ -132,6 +132,8 @@ class ThankReceivedByEmail(db.Model):
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
 
+    receiver_user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByEmailStatusChoices.USER_NOT_FOUND):
         self.thank_id = thank_id
         self.receiver_id = receiver_id
@@ -151,7 +153,8 @@ class ThankReceivedByEmail(db.Model):
     def is_migrated(self):
         return self.status == ThankReceivedByEmailStatusChoices.MIGRATED
 
-    def make_migrated(self):
+    def make_migrated(self, receiver_user_id):
+        self.receiver_user_id = receiver_user_id
         self.status = ThankReceivedByEmailStatusChoices.MIGRATED
         return self
 
@@ -172,6 +175,13 @@ class ThankReceivedByEmail(db.Model):
         self.status = ThankReceivedByEmailStatusChoices.DELETED
         return self
 
+    @staticmethod
+    def get_thank_received_by_email_by_thank_and_receiver(thank_id, receiver_id):
+        return ThankReceivedByEmail.query \
+            .filter(ThankReceivedByEmail.thank_id == thank_id,
+                    ThankReceivedByEmail.receiver_id == receiver_id,
+                    ThankReceivedByEmail.status != ThankReceivedByEmailStatusChoices.DELETED) \
+            .first()
 
 class ThankReceivedByPublicPage(db.Model):
 

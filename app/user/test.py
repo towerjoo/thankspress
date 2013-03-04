@@ -1,5 +1,3 @@
-#!/venv/bin/python
-
 import os
 import unittest
 from hashlib import md5
