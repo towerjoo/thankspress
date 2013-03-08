@@ -25,8 +25,8 @@ toolbar = DebugToolbarExtension(app)
 from flask.ext.login import LoginManager
 lm = LoginManager()
 lm.setup_app(app)
-lm.login_view = 'sign_in'
-lm.login_message = 'You must sign in to access this page.'
+lm.login_view = 'login'
+lm.login_message = 'You must login to access this page.'
 
 # Mail
 from flask.ext.mail import Mail
@@ -35,6 +35,10 @@ mail = Mail(app)
 # SQLAlchemy
 from flask.ext.sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
+
+#App
+from app import before_request
+from app import error_handlers
 
 # Apps
 from config import APPS

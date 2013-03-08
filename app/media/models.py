@@ -1,6 +1,6 @@
 from app import db
 from app.media.choices import MediaStatusChoices
-
+from app.thank.choices import ThankStatusChoices
 from datetime import datetime
 
 class Media(db.Model):
@@ -10,16 +10,6 @@ class Media(db.Model):
     path = db.Column(db.String(32), nullable = False)
     status = db.Column(db.SmallInteger, nullable = False)
     date_registered = db.Column(db.DateTime, nullable = False)
-
-    user_profile = db.relationship('UserProfile', 
-        primaryjoin='and_(UserProfile.picture_id == Media.id)',
-        backref = 'picture', 
-        lazy = 'dynamic')
-
-    thank = db.relationship('Thank', 
-        primaryjoin='and_(Thank.media_id == Media.id)', 
-        backref = 'media', 
-        lazy = 'dynamic')
 
     def __init__(self, type, path, status = MediaStatusChoices.VISIBLE):
         self.type = type

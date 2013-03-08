@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+    <div class="inner min_height">
+        {% include "notifications/notifications_sidebar.html" %}
+        <div class="content">
+            <h1>Manage Received Thanks</h1>
+            {% for thank in thanks %}
+                <p>
+                    <a href=" {{ url_for('thanks_thank_make_hidden', id = thank.id) }}?next={{ url_for('notifications_thanks_received') }} ">
+                        Make Hidden
+                    </a> | 
+                    <a href="{{ url_for('thanks_thank_make_visible', id = thank.id) }}?next={{ url_for('notifications_thanks_received') }}">
+                        Make Visible
+                    </a></p>
+                {% include "users/includes/thank.html" %}
+                <hr>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+	<div class="inner min_height">
+    	<h1>Welcome to ThanksPress</h1>
+
+		<p>We sent an email verification link to {{ g.user.primary_email.email }}. Please use this link to continue...</p>
+
+		<p><a href="{{ url_for('settings_emails_email_send_key', email = g.user.primary_email.email )}}">Resend Email Verification Link</a></p>
+	</div>
+</div>
+{% endblock %}

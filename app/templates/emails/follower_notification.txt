@@ -2,7 +2,7 @@ Dear {{user.username}},
 
 {{follower.username}} is now a follower. Click on the following link to visit {{follower.username}}'s profile page:
 
-{{url_for("user_timeline", username = follower.username, _external = True)}}
+{{url_for("user_thanks", username = follower.username, _external = True)}}
 
 Regards,
 

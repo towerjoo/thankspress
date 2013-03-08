@@ -18,19 +18,19 @@ def send_email(subject, sender, recipients, text_body, html_body):
 def follower_notification(follower, followed):
     send_email("%s is now following you." % follower.username,
         ADMINS[0],
-        [followed.get_primary_email().email],
+        [followed.primary_email.email],
         render_template("emails/follower_notification.txt", 
             user = followed, follower = follower),
         render_template("emails/follower_notification.html", 
             user = followed, follower = follower))
 
-def sign_up(email):
+def register(email):
     send_email("Welcome to ThanksPress!",
         ADMINS[0],
         [email.email],
-        render_template("emails/sign_up.txt", 
+        render_template("emails/register.txt", 
             email = email),
-        render_template("emails/sign_up.html", 
+        render_template("emails/register.html", 
             email = email))
 
 def settings_emails_email_add(email):

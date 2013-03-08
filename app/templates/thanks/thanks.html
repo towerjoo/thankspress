@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+	<div class="inner min_height">
+		{% if thanks == [] %}
+
+            Boo no thanks here. You better follow some people.
+            
+            {% if suggested_users != None %}
+                <ul>
+                {% for user in random_users %}
+                    {% include "includes/list_user_profile.html" %}
+                {% endfor %}
+                </ul>
+            {% endif %}
+
+        {% else %}
+            <ul>
+            {% for thank in thanks %}
+                {% include "includes/list_thank.html" %}
+            {% endfor %}
+            </ul>
+        {% endif %}
+	</div>
+</div>
+{% endblock %}

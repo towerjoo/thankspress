@@ -1,0 +1,33 @@
+<div style="overflow:hidden;">
+    <div style="float:left;width:50px;">
+        <img style="height:50px;width:50px;" src="{{url_for('media', id = thank.giver.profile.picture_id)}}" />
+    </div>
+    <div style="float:left;width:500px;margin-left:10px;">
+        <p>
+            <strong>
+                <a href="{{ url_for('user_thanks', username = thank.giver.username) }}">{{ thank.giver.profile.name }}</a>
+            </strong>
+            <em>{{ thank.date_registered.strftime('%Y-%m-%d %H:%M') }}</em>
+        </p>
+        <p>
+            {% for receiver_user in thank.receiver_users.all() %}
+            <a href="{{ url_for('user_thanks', username = receiver_user.username) }}">{{ receiver_user.profile.name }}</a>,
+            {% endfor %}
+
+            {% for receiver_public_page in thank.receiver_public_pages.all() %}
+            {{ receiver_public_page.name }},
+            {% endfor %}
+
+            {% if thank.giver == g.user %}
+                {% for receiver_email in thank.receiver_emails.all() %}
+                {{ receiver_email.email }},
+                {% endfor %}
+            {% endif %}
+        </p>
+        {% if thank.message != None %}
+            <p>
+                {{ thank.message }}
+            </p>
+        {% endif %}
+    </div>
+</div>

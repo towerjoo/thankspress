@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+	<div class="inner min_height">
+		<h1>Register</h1>
+		<form action="" method="post" name="sign_up">
+		    {{form.hidden_tag()}}
+		    <p>
+		    	Name:<br>
+		    	{% for error in form.errors.name %}
+				<span style="color: red;">[{{error}}]</span><br>
+				{% endfor %}
+		        {{form.name()}}
+		    </p>
+		    <p>
+		    	Username:<br>
+		    	{% for error in form.errors.username %}
+				<span style="color: red;">[{{error}}]</span><br>
+				{% endfor %}
+		        {{form.username()}}
+		    </p>
+		    <p>
+		    	Email:<br>
+		    	{% for error in form.errors.email %}
+				<span style="color: red;">[{{error}}]</span><br>
+				{% endfor %}
+		        {{form.email()}}
+		    </p>
+			<p>
+		        New Password:<br>
+                    {% for error in form.errors.new_password %}
+                        <span style="color: red;">[{{error}}]</span><br>
+                    {% endfor %}
+                    {{form.new_password()}}
+		    </p>
+			<p>
+		        New Password Again:<br>
+                    {% for error in form.errors.new_password_again %}
+                        <span style="color: red;">[{{error}}]</span><br>
+                    {% endfor %}
+                    {{form.new_password_again()}}
+		    </p>
+		    <p><input type="submit" value="Register"></p>
+		</form>
+	</div>
+</div>
+{% endblock %}

@@ -1,9 +1,14 @@
 from app import db
-from datetime import datetime
+from app.email.choices import EmailStatusChoices
 from app.media.models import Media
-from app.thank.choices import ThankCommentStatusChoices, ThankStatusChoices, \
-    ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices, \
-    ThankReceivedByPublicPageStatusChoices
+from app.thank.choices import (ThankCommentStatusChoices, ThankStatusChoices,
+    ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices,
+    ThankReceivedByPublicPageStatusChoices)
+from app.user.choices import UserStatusChoices
+from app.public_page.choices import PublicPageStatusChoices
+
+from flask import g
+from datetime import datetime
 
 class Thank(db.Model):
 
@@ -16,10 +21,36 @@ class Thank(db.Model):
     message_language = db.Column(db.String(5))
     media_id = db.Column(db.Integer, db.ForeignKey("media.id"))
 
+    giver = db.relationship('User', primaryjoin = 'and_(User.id == Thank.giver_id, User.status != %d)' % UserStatusChoices.DELETED)
+    media = db.relationship('Media', primaryjoin = 'and_(Media.id == Thank.media_id)')
+
+
     comments = db.relationship("ThankComment", 
-        primaryjoin = "and_(ThankComment.thank_id == Thank.id, ThankComment.status != 3)",
-        backref = "thank", 
+        primaryjoin = "and_(ThankComment.thank_id == Thank.id, ThankComment.status != %d)" % ThankCommentStatusChoices.DELETED,
         lazy = "dynamic")
+
+    receiver_users = db.relationship('User',
+        secondary = 'thank_received_by_user',
+        primaryjoin = "and_(  ThankReceivedByUser.thank_id == Thank.id, \
+                                ThankReceivedByUser.status != %d)" % ThankReceivedByUserStatusChoices.DELETED, 
+        secondaryjoin = "and_(User.id == ThankReceivedByUser.receiver_id)",
+        lazy = 'dynamic')
+
+    receiver_emails = db.relationship('Email',
+        secondary = 'thank_received_by_email', 
+        primaryjoin = "and_(  ThankReceivedByEmail.thank_id == Thank.id, \
+                                ThankReceivedByEmail.status != %d, \
+                                ThankReceivedByEmail.status != %d)" % ( ThankReceivedByEmailStatusChoices.MIGRATED,
+                                                                        ThankReceivedByEmailStatusChoices.DELETED),
+        secondaryjoin = "and_(Email.id == ThankReceivedByEmail.receiver_id)",
+        lazy = 'dynamic')
+
+    receiver_public_pages = db.relationship('PublicPage',
+        secondary = 'thank_received_by_public_page',
+        primaryjoin = "and_(ThankReceivedByPublicPage.thank_id == Thank.id, \
+                            ThankReceivedByPublicPage.status != %d)" % ThankReceivedByPublicPageStatusChoices.DELETED,
+        secondaryjoin = "and_(PublicPage.id == ThankReceivedByPublicPage.receiver_id)",
+        lazy = 'dynamic')
 
     def __init__(self, giver_id, message = None, message_language = None, media_id = None, status = ThankStatusChoices.PUBLIC):
         self.giver_id = giver_id
@@ -70,6 +101,20 @@ class Thank(db.Model):
         except:
             return None
 
+    @staticmethod
+    def migrate_thanks_received_by_email_to_user(email):
+        if email.user != None:
+            for thank in email.thanks_received.all():
+                if thank.giver != g.user and thank not in email.user.thanks_received.all():
+                    thank_received_by_user = ThankReceivedByUser(thank_id = thank.id, receiver_id = email.user_id)
+                    db.session.add(thank_received_by_user)
+                    db.session.commit()
+                thank_received_by_email = ThankReceivedByEmail.get_thank_received_by_email_by_thank_and_receiver(thank.id, email.id)
+                thank_received_by_email.make_migrated(email.user_id)
+                db.session.add(thank_received_by_email)
+            db.session.commit()
+            return email
+        return None
 
 class ThankComment(db.Model):
 
@@ -81,6 +126,13 @@ class ThankComment(db.Model):
     date_registered = db.Column(db.DateTime, nullable = False)
     
     comment_language = db.Column(db.String(5))
+
+    thank = db.relationship("Thank", 
+        primaryjoin = "and_(Thank.id == ThankComment.thank_id, \
+                            Thank.status != %d)" % ThankStatusChoices.DELETED)
+    commenter = db.relationship("User", 
+        primaryjoin = "and_(User.id == ThankComment.commenter_id, \
+                            User.status != %d)" % UserStatusChoices.DELETED)
 
     def __init__(self, comment, thank_id, commenter_id, comment_language = None, status = ThankCommentStatusChoices.VISIBLE):
         self.comment = comment
@@ -132,7 +184,7 @@ class ThankReceivedByEmail(db.Model):
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
 
-    receiver_user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    migrated_to = db.Column(db.Integer, db.ForeignKey("thank_received_by_user.id"))
 
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByEmailStatusChoices.USER_NOT_FOUND):
         self.thank_id = thank_id
@@ -153,8 +205,8 @@ class ThankReceivedByEmail(db.Model):
     def is_migrated(self):
         return self.status == ThankReceivedByEmailStatusChoices.MIGRATED
 
-    def make_migrated(self, receiver_user_id):
-        self.receiver_user_id = receiver_user_id
+    def make_migrated(self, migrated_to):
+        self.migrated_to = migrated_to
         self.status = ThankReceivedByEmailStatusChoices.MIGRATED
         return self
 
@@ -174,6 +226,13 @@ class ThankReceivedByEmail(db.Model):
     def make_deleted(self):
         self.status = ThankReceivedByEmailStatusChoices.DELETED
         return self
+
+    @staticmethod
+    def get_thank_received_by_email(id):
+        try:
+            return ThankReceivedByEmail.query.get(int(id))
+        except:
+            None
 
     @staticmethod
     def get_thank_received_by_email_by_thank_and_receiver(thank_id, receiver_id):
@@ -233,6 +292,10 @@ class ThankReceivedByUser(db.Model):
     status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
 
+    migrated_from = db.relationship("ThankReceivedByEmail", 
+        primaryjoin = "and_(ThankReceivedByEmail.migrated_to == ThankReceivedByUser.id, \
+                            ThankReceivedByEmail.status == %d)" % ThankReceivedByEmailStatusChoices.MIGRATED)
+
     def __init__(self, thank_id, receiver_id, status = ThankReceivedByUserStatusChoices.UNREAD):
         self.thank_id = thank_id
         self.receiver_id = receiver_id
@@ -280,3 +343,10 @@ class ThankReceivedByUser(db.Model):
         self.status = ThankReceivedByUserStatusChoices.DELETED
         return self
 
+    @staticmethod
+    def get_thank_received_by_user_by_thank_and_receiver(thank_id, receiver_id):
+        return ThankReceivedByUser.query \
+            .filter(ThankReceivedByUser.thank_id == thank_id,
+                    ThankReceivedByUser.receiver_id == receiver_id,
+                    ThankReceivedByUser.status != ThankReceivedByUserStatusChoices.DELETED) \
+            .first()

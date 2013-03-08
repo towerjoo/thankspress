@@ -1,191 +1,52 @@
 from app import db
 from app import functions
 from app.public_page.choices import PublicPageStatusChoices
-from app.thank.choices import ThankCommentStatusChoices, ThankStatusChoices, \
-    ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices
-from app.user.choices import EmailStatusChoices, FollowStatusChoices, UserStatusChoices
+
+from app.email.models import Email
+from app.email.choices import EmailStatusChoices
+from app.follow.choices import FollowStatusChoices
+from app.thank.choices import (ThankCommentStatusChoices, ThankStatusChoices,
+    ThankReceivedByEmailStatusChoices, ThankReceivedByUserStatusChoices)
+from app.user.choices import UserStatusChoices
 
 from config import FORBIDDEN_USERNAMES
 from datetime import datetime, timedelta
-from hashlib import md5
-
-class Email(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    email = db.Column(db.String(320), nullable = False)
-    is_primary = db.Column(db.Boolean, nullable = False)
-    status = db.Column(db.SmallInteger, nullable = False) 
-    date_registered = db.Column(db.DateTime, nullable = False)
-    verification_key = db.Column(db.String(32)) # To be deleted once verified
-
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-
-    thanks_received = db.relationship('Thank',
-        secondary = 'thank_received_by_email', 
-        primaryjoin = "and_(ThankReceivedByEmail.receiver_id == Email.id, ThankReceivedByEmail.status != %d)" % ThankReceivedByEmailStatusChoices.DELETED, 
-        secondaryjoin = "and_(Thank.id == ThankReceivedByEmail.thank_id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
-        backref = db.backref('receiver_emails', lazy = 'dynamic'), 
-        lazy = 'dynamic')
-
-    def __init__(self, email, user_id = None, is_primary = False, status = EmailStatusChoices.NOT_VERIFIED):
-        self.email = email
-        self.user_id = user_id
-        self.is_primary = is_primary
-        self.status = status
-        self.date_registered = datetime.utcnow()
-        self.verification_key = functions.generate_key(email)
-
-    def __repr__(self):
-        return '<Email %r>' % (self.id)
-
-    def is_not_primary(self):
-        return not self.is_primary
-
-    def make_not_primary(self):
-        self.is_primary = False
-        return self
-
-    def make_primary(self):
-        self.is_primary = True
-        return self
-
-    def is_not_verified(self):
-        return self.status == EmailStatusChoices.NOT_VERIFIED
-
-    def make_not_verified(self):
-        self.status = EmailStatusChoices.NOT_VERIFIED
-        self.verification_key = functions.generate_key(self.mail)
-        return self
-
-    def is_verified(self):
-        return self.status == EmailStatusChoices.VERIFIED
-
-    def make_verified(self):
-        self.status = EmailStatusChoices.VERIFIED
-        self.verification_key = None
-        return self
-
-    def is_reported(self):
-        return self.status == EmailStatusChoices.REPORTED
-
-    def make_reported(self):
-        self.status = EmailStatusChoices.REPORTED
-        return self
-
-    def is_not_deleted(self):
-        return not self.is_deleted()
-
-    def is_deleted(self):
-        return self.status == EmailStatusChoices.DELETED
-
-    def make_deleted(self):
-        self.status = EmailStatusChoices.DELETED
-        self.is_primary = False
-        return self
-
-    @staticmethod
-    def get_email(id):
-        try:
-            return Email.query.get(int(id))
-        except:
-            return None
-
-    @staticmethod
-    def get_email_by_email(email):
-        return Email.query.filter(Email.email == email, Email.status != EmailStatusChoices.DELETED).first()
-
-    @staticmethod
-    def get_primary_email_by_email(email):
-        return Email.query.filter(Email.email == email, Email.is_primary == True).first()
-
-    @staticmethod
-    def get_primary_email_by_user_id(user_id):
-        return Email.query.filter(Email.user_id == user_id, Email.is_primary == True).first()
-
-    @staticmethod
-    def is_unique_email(email):
-        return Email.query.filter(Email.email == email, Email.status != EmailStatusChoices.DELETED).first() == None
-
-class Follow(db.Model):
-
-    id = db.Column(db.Integer, primary_key = True)
-    follower_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-    followed_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable = False)
-    status = db.Column(db.SmallInteger, nullable = False) 
-    date_registered = db.Column(db.DateTime, nullable = False)
-
-    def __init__(self, follower_id, followed_id, status = FollowStatusChoices.FOLLOWING):
-        self.follower_id = follower_id
-        self.followed_id = followed_id
-        self.status = status
-        self.date_registered = datetime.utcnow()
-
-    def __repr__(self):
-        return '<Follow %r>' % (self.id)
-
-    def is_following(self):
-        return self.status == FollowStatusChoices.FOLLOWING
-
-    def make_following(self):
-        self.status = FollowStatusChoices.FOLLOWING
-        return self
-
-    def is_not_deleted(self):
-        return not self.is_deleted()
-
-    def is_deleted(self):
-        return self.status == FollowStatusChoices.DELETED
-
-    def make_deleted(self):
-        self.status = FollowStatusChoices.DELETED
-        return self
-
-    @staticmethod
-    def get_follow(id):
-        try:
-            return Follow.query.get(int(id))
-        except:
-            return None
-
-    @staticmethod
-    def is_following_by_follower_and_followed(follower_id, followed_id):
-        return Follow.query.filter(Follow.follower_id == follower_id, Follow.followed_id == followed_id, Follow.status == FollowStatusChoices.FOLLOWING).first() != None
-
-    @staticmethod
-    def get_follow_by_follower_and_followed(follower_id, followed_id):
-        return Follow.query.filter(Follow.follower_id == follower_id, Follow.followed_id == followed_id, Follow.status == FollowStatusChoices.FOLLOWING).first()
-
-    @staticmethod
-    def get_deleted_follows_by_follower_and_followed(follower_id, followed_id):
-        return Follow.query.filter(Follow.follower_id == follower_id, Follow.followed_id == followed_id, Follow.status == FollowStatusChoices.DELETED).all()
-
+from hashlib import sha1
 
 class User(db.Model):
 
     id = db.Column(db.Integer, primary_key = True)
-    password = db.Column(db.String(32), nullable = False)
-    language = db.Column(db.String(5), nullable = False)
-    status = db.Column(db.SmallInteger, nullable = False) 
     date_registered = db.Column(db.DateTime, nullable = False)
+    language = db.Column(db.String(5), nullable = False)
+    password = db.Column(db.String(40), nullable = False)
+    status = db.Column(db.SmallInteger, nullable = False) 
+    username = db.Column(db.String(40), nullable = False)
 
-    date_last_signed_in = db.Column(db.DateTime)
-    date_last_acted = db.Column(db.DateTime)
-    username = db.Column(db.String(32))
-    password_reset_key = db.Column(db.String(32))
+    date_last_logged_in = db.Column(db.DateTime)
+    date_last_seen = db.Column(db.DateTime)
+    password_reset_key = db.Column(db.String(40))
     password_reset_key_expiration_date = db.Column(db.DateTime)
 
     # Email
     emails = db.relationship("Email", 
-        primaryjoin = "and_(Email.user_id == User.id, Email.status != %d)" % EmailStatusChoices.DELETED, 
-        backref = "user", 
+        primaryjoin = "and_(Email.user_id == User.id, \
+                            Email.status != %d)" % EmailStatusChoices.DELETED, 
         lazy = "dynamic")
+
+    primary_email = db.relationship("Email", 
+        primaryjoin = "and_(Email.user_id == User.id, \
+                            Email.is_primary == True, Email.status != %d)" % EmailStatusChoices.DELETED,
+        uselist = False)
 
     # Follow
     following = db.relationship('User',
         secondary = 'follow', 
-        primaryjoin = "and_(User.id == Follow.follower_id, User.status != %d)" % UserStatusChoices.DELETED, 
-        secondaryjoin = "and_(Follow.followed_id == User.id, Follow.status == %d)" % FollowStatusChoices.FOLLOWING, 
-        backref = db.backref('followers', lazy = 'dynamic'), 
+        primaryjoin = "and_(User.id == Follow.follower_id, \
+                            User.status != %d)" % UserStatusChoices.DELETED, 
+        secondaryjoin = "and_(  Follow.followed_id == User.id, \
+                                Follow.status == %d)" % FollowStatusChoices.FOLLOWING, 
+        backref = db.backref('followers', 
+            lazy = 'dynamic'), 
         lazy = 'dynamic')
 
     # Profile
@@ -193,34 +54,44 @@ class User(db.Model):
 
     # PublicPage
     public_pages = db.relationship("PublicPage", 
-        primaryjoin = "and_(PublicPage.creator_id == User.id, PublicPage.status != %d)" % PublicPageStatusChoices.DELETED, 
-        backref = "creator", 
+        primaryjoin = "and_(PublicPage.creator_id == User.id, \
+                            PublicPage.status != %d)" % PublicPageStatusChoices.DELETED, 
         lazy = "dynamic")
 
     # Thank
     thanks_given = db.relationship("Thank", 
-        primaryjoin="and_(Thank.giver_id == User.id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
-        backref = "giver", 
+        primaryjoin="and_(  Thank.giver_id == User.id, \
+                            Thank.status != %d)" % ThankStatusChoices.DELETED, 
         lazy = "dynamic")
 
     thanks_received = db.relationship('Thank',
         secondary = 'thank_received_by_user', 
-        primaryjoin = "and_(ThankReceivedByUser.receiver_id == User.id, ThankReceivedByUser.status != %d)" % ThankReceivedByUserStatusChoices.DELETED, 
-        secondaryjoin = "and_(Thank.id == ThankReceivedByUser.thank_id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
-        backref = db.backref('receiver_users', lazy = 'dynamic'), 
+        primaryjoin = "and_(ThankReceivedByUser.receiver_id == User.id, \
+                            ThankReceivedByUser.status != %d)" % ThankReceivedByUserStatusChoices.DELETED, 
+        secondaryjoin = "and_(  Thank.id == ThankReceivedByUser.thank_id, \
+                                Thank.status != %d)" % ThankStatusChoices.DELETED, 
+        lazy = 'dynamic')
+
+    thanks_received_unread = db.relationship('Thank',
+        secondary = 'thank_received_by_user',
+        primaryjoin = "and_(ThankReceivedByUser.receiver_id == User.id, \
+                            ThankReceivedByUser.status == %d)" % ThankReceivedByUserStatusChoices.UNREAD, 
+        secondaryjoin = "and_(  Thank.id == ThankReceivedByUser.thank_id, \
+                                Thank.status != %d)" % ThankStatusChoices.DELETED, 
         lazy = 'dynamic')
 
     # ThankComment
-    comments = db.relationship("ThankComment", 
-        primaryjoin = "and_(ThankComment.commenter_id == User.id, ThankComment.status != %d)" % ThankCommentStatusChoices.DELETED, 
-        backref = "commenter", 
+    thank_comments = db.relationship("ThankComment", 
+        primaryjoin = "and_(ThankComment.commenter_id == User.id, \
+                            ThankComment.status != %d)" % ThankCommentStatusChoices.DELETED, 
         lazy = "dynamic")
 
-    def __init__(self, password, status = UserStatusChoices.NEW, language = 'en'):
-        self.password = md5(password).hexdigest()
-        self.status = status
+    def __init__(self, password, username, language = 'en', status = UserStatusChoices.NEW):
         self.date_registered = datetime.utcnow()
         self.language = language
+        self.password = sha1(password).hexdigest()
+        self.username = username
+        self.status = status
 
     def __repr__(self):
         return "<User %r - %s>" % (self.id, self.profile.name)
@@ -280,10 +151,10 @@ class User(db.Model):
         return self
 
     def match_password(self, password):
-        return self.password == md5(password).hexdigest()
+        return self.password == sha1(password).hexdigest()
 
     def change_password(self, new_password):
-        self.password = md5(new_password).hexdigest()
+        self.password = sha1(new_password).hexdigest()
         self.date_changed_password = datetime.utcnow()
         return self
 
@@ -293,16 +164,16 @@ class User(db.Model):
         return self
 
     def can_reset_password(self, password_reset_key):
-        return self.password_reset_key != None and self.password_reset_key == password_reset_key and self.password_reset_key_expiration_date > datetime.utcnow()
+        return self.password_reset_key != None \
+            and self.password_reset_key_expiration_date != None \
+            and self.password_reset_key == password_reset_key \
+            and self.password_reset_key_expiration_date > datetime.utcnow()
 
     def reset_password(self, new_password):
         self.change_password(new_password)
         self.password_reset_key = None
         self.password_reset_key_expiration_date = None
         return self
- 
-    def get_primary_email(self):
-        return Email.get_primary_email_by_user_id(self.id)
 
     def total_following(self):
         return len(self.following.all())-1 #Exclude user's self following
@@ -319,7 +190,9 @@ class User(db.Model):
 
     @staticmethod
     def get_user_by_username(username):
-        return User.query.filter(User.username == username, User.status != 4).first()
+        return User.query.filter(   User.username == username, 
+                                    User.status != UserStatusChoices.DELETED)\
+                            .first()
 
     @staticmethod
     def get_user_by_email(email):
@@ -329,27 +202,30 @@ class User(db.Model):
         return None
 
     @staticmethod
-    def sign_in_by_email(email, password):
+    def login_by_email(email, password):
         user = User.get_user_by_email(email)
-        if user != None and user.password == md5(password).hexdigest():
+        if user != None and user.password == sha1(password).hexdigest():
             return user
         return None
 
     @staticmethod
-    def sign_in_by_username(username, password):
-        return User.query.filter(User.username == username, User.password == md5(password).hexdigest(), User.status != UserStatusChoices.DELETED).first()
+    def login_by_username(username, password):
+        return User.query.filter(   User.username == username, 
+                                    User.password == sha1(password).hexdigest(), 
+                                    User.status != UserStatusChoices.DELETED)\
+                            .first()
 
     @staticmethod
-    def is_unique_username(username):
-        return username not in FORBIDDEN_USERNAMES and User.query.filter(User.username == username, User.status != UserStatusChoices.DELETED).first() == None
+    def is_free_username(username):
+        return username not in FORBIDDEN_USERNAMES and User.get_user_by_username(username) == None
 
     @staticmethod
-    def make_unique_username(username):
-        if User.is_unique_username(username): 
+    def make_free_username(username):
+        if User.is_free_username(username): 
             return username
         count = 2
         username += str(count) 
-        while User.is_unique_username(username) != True:
+        while User.is_free_username(username) != True:
             count += 1
             username = username[:-1] + str(count)
         return username
@@ -358,7 +234,7 @@ class User(db.Model):
 class UserProfile(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key = True)
-    name = db.Column(db.String(32), nullable = False)
+    name = db.Column(db.String(40), nullable = False)
     picture_id = db.Column(db.Integer, db.ForeignKey("media.id"), nullable = False)
 
     bio = db.Column(db.String(500))
@@ -370,4 +246,4 @@ class UserProfile(db.Model):
         self.picture_id = picture_id
 
     def __repr__(self):
-        return "<Profile %r - %s>" % (self.user_id, self.name)
+        return "<UserProfile %r - %s>" % (self.user_id, self.name)

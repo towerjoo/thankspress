@@ -10,10 +10,10 @@
 				{% if g.user.is_authenticated() %}
 				<span class="content_buttons">
 					{% if user != g.user %} 
-						{% if Follow.is_following_by_follower_and_followed(g.user.id, user.id) %}
-							<a href="{{url_for('users_unfollow', followed_id = user.id)}}">Unfollow</a>
+						{% if user in g.user.following.all() %}
+							<a href="{{url_for('follows_followed_unfollow', followed_id = user.id)}}">Unfollow</a>
 						{% else %}
-							<a href="{{url_for('users_follow', followed_id = user.id)}}">Follow</a>
+							<a href="{{url_for('follows_followed_follow', followed_id = user.id)}}">Follow</a>
 						{% endif %}
 					{% endif %}
 				</span>
@@ -34,21 +34,17 @@
 			<p>Following: {{user.total_following()}}</p>
 			<p>Followers: {{user.total_followers()}}</p>
 
-			<h2>Thanks Given</h2>
-			{% for thank in user.received_thanks %}
-				<p><b>thank.giver.name</b></p>
-				{% if thank.message != None %}
-					<p>{{thank.message}}</p>
-				{% endif %}
-			{% endfor %}
-
-			<h2>Thanks Received</h2>
-			{% for thank in user.thanks_given %}
-				<p><b>thank.giver.name</b></p>
-				{% if thank.message != None %}
-					<p>{{thank.message}}</p>
-				{% endif %}
-			{% endfor %}
+			<hr>
+			{% if thanks == [] %}
+				No thanks here.
+			{% else %}
+	            {% for thank in thanks %}
+	                {% if thank.is_public() or g.user in thank.receiver_users.all() or g.user == thank.giver %}
+	                    {% include "users/includes/thank.html" %}
+	                    <hr>
+	                {% endif %}
+	            {% endfor %}
+            {% endif %}
 		</div>
 	</div>
 </div>

@@ -1,5 +1,3 @@
-#coding: utf-8
-
 from app.choices import Choices
 
 class PublicPageStatusChoices(Choices):

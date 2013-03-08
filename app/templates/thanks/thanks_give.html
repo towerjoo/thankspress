@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="content">
+    <div class="inner min_height">
+        <h1>Give Thanks</h1>
+        <form action="" method="post" name="sign_up">
+            {{form.hidden_tag()}}
+            <p>
+                Receivers:<br>
+                {% for error in form.errors.receivers %}
+                <span style="color: red;">[{{error}}]</span><br>
+                {% endfor %}
+                {{form.receivers()}}
+            </p>
+            <p>
+                Message:<br>
+                {% for error in form.errors.message %}
+                <span style="color: red;">[{{error}}]</span><br>
+                {% endfor %}
+                {{form.message()}}
+            </p>
+            <p>
+                Media:<br>
+                {% for error in form.errors.media %}
+                    <span style="color: red;">[{{error}}]</span><br>
+                {% endfor %}
+                {{form.media()}}
+            </p>
+            <p>Private {{form.private}}</p>
+            <p><input type="submit" value="Submit"></p>
+        </form>
+    </div>
+</div>
+{% endblock %}

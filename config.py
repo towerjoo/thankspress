@@ -4,7 +4,7 @@ import os
 ADMINS = ('thankspress@creco.co',)
 
 # Apps
-APPS = ('media', 'public_page', 'thank', 'user',)
+APPS = ('email', 'follow', 'media', 'notification', 'public_page', 'thank', 'user',)
 
 # Directories
 BASEDIR = os.path.abspath(os.path.dirname(__file__))

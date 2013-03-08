@@ -2,12 +2,12 @@
     <div id="user_mini_profile">
         <img src="{{url_for('media', id=user.profile.picture_id)}}">
         <ul>
-            <li><a class="name" href="{{ url_for('user_timeline', username=user.username) }}">{{ user.profile.name }}</a></li>
-            <li><a class="username" href="{{ url_for('user_timeline', username=user.username) }}">{{ user.username }}</a></li>
+            <li><a class="name" href="{{ url_for('user_thanks', username=user.username) }}">{{ user.profile.name }}</a></li>
+            <li><a class="username" href="{{ url_for('user_thanks', username=user.username) }}">{{ user.username }}</a></li>
         </ul>
     </div>
     <ul id="page_links">
-        <li><a href="{{ url_for('user_timeline', username=user.username) }}">Timeline</a></li>
+        <li><a href="{{ url_for('user_thanks', username=user.username) }}">Thanks</a></li>
         <li><a href="{{ url_for('user_following', username=user.username) }}">Following</a></li>
         <li><a href="{{ url_for('user_followers', username=user.username) }}">Followers</a></li>
         <li><a href="{{ url_for('user_thanks_given', username=user.username) }}">Thanks Given</a></li>

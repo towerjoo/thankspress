@@ -11,3 +11,15 @@ def is_image_type(filename):
 
 def generate_key(val):
     return md5(str(random()) + str(val)).hexdigest()
+
+def is_integer(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+
+def is_integer_with_pound_key(s):
+    if s[0] == '#' and is_integer(s[1:]):
+        return True
+    return False

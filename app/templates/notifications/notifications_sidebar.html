@@ -1,0 +1,13 @@
+<aside id="content_sidebar">
+    <div id="user_mini_profile">
+        <img src="{{url_for('media', id=g.user.profile.picture_id)}}">
+        <ul>
+            <li><a class="name" href="{{ url_for('user_thanks', username=g.user.username) }}">{{ g.user.profile.name }}</a></li>
+            <li><a class="username" href="{{ url_for('user_thanks', username=g.user.username) }}">{{ g.user.username }}</a></li>
+        </ul>
+    </div>
+    <ul id="page_links">
+        <li><a href="{{ url_for('notifications') }}">All</a></li>
+        <li><a href="{{ url_for('notifications_thanks_received') }}">Thanks-Received</a></li>
+    </ul>
+</aside>

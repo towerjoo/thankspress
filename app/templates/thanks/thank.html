@@ -3,7 +3,33 @@
 {% block content %}
 <div id="content">
 	<div class="inner min_height">
-		<p><img style="max-width:50px;max-height:50px;" src="{{ url_for('media', id=thank.giver.profile.picture_id) }}"> {{thank.giver.profile.name}} thanks to:</p>
+		<p><img style="max-width:50px;max-height:50px;" src="{{ url_for('media', id=thank.giver.profile.picture_id) }}"> 
+            {% if thank.is_private() %}
+            (Private)
+            {% endif %}
+
+            {{thank.giver.profile.name}} thanks to:
+            
+            {% for user in thank.receiver_users.all() %}
+                {{user.profile.name}}
+
+                {% if ThankReceivedByUser.get_thank_received_by_user_by_thank_and_receiver(thank.id, user.id).migrated_from != None %}
+
+                    (
+                    {% for email in ThankReceivedByUser.get_thank_received_by_user_by_thank_and_receiver(thank.id, user.id).migrated_from %}
+                        {{ email.email }}
+                    {% endfor %})
+
+                {% endif %}
+                ,
+            {% endfor %}
+            {% for public_page in thank.receiver_public_pages.all() %}
+                {{public_page.name}},
+            {% endfor %}
+            {% for email in thank.receiver_emails.all() %}
+                {{email.email}},
+            {% endfor %}
+        </p>
 
         {% if thank.media_id != None %}
         <p>

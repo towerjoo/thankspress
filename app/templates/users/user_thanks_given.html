@@ -5,7 +5,13 @@
     <div class="inner min_height">
         {% include "users/user_sidebar.html" %}
         <div class="content">
-            Thanks Given
+            <h1>Thanks Given</h1>
+            {% for thank in thanks %}
+                {% if thank.is_public() or g.user in thank.receiver_users.all() or g.user == thank.giver %}
+                    {% include "users/includes/thank.html" %}
+                    <hr>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 </div>

@@ -1,13 +1,15 @@
 import os
 import unittest
-from hashlib import md5
-from sqlalchemy import or_, desc
 
-from config import BASEDIR
 from app import app, db
-from app.user.models import Email, Follow, User, UserProfile
+from app.email.models import Email
+from app.user.models import User, UserProfile
 from app.thank.models import Media, Thank, ThankReceivedByEmail, ThankReceivedByPublicPage, ThankReceivedByUser
 from app.test import BaseTestCase
+
+from config import BASEDIR
+from hashlib import md5
+from sqlalchemy import or_, desc
 
 class TestCase(BaseTestCase):
 
@@ -16,6 +18,11 @@ class TestCase(BaseTestCase):
         u2_name = 'susan'
         u3_name = 'mary'
         u4_name = 'david'
+
+        u1_username = 'john'
+        u2_username = 'susan'
+        u3_username = 'mary'
+        u4_username = 'david'
 
         u1_email = 'john@example.com'
         u2_email = 'susan@example.com'
@@ -28,10 +35,10 @@ class TestCase(BaseTestCase):
         u4_password = 'david123'
 
         # make four users
-        u1 = User(password = u1_password)
-        u2 = User(password = u2_password)
-        u3 = User(password = u3_password)
-        u4 = User(password = u4_password)        
+        u1 = User(password = u1_password, username = u1_username)
+        u2 = User(password = u2_password, username = u2_username)
+        u3 = User(password = u3_password, username = u3_username)
+        u4 = User(password = u4_password, username = u4_username)        
 
         db.session.add(u1)
         db.session.add(u2)
@@ -62,10 +69,10 @@ class TestCase(BaseTestCase):
         db.session.add(e4)
         db.session.commit()
 
-        assert u1.get_primary_email().email == e1.email
-        assert u2.get_primary_email().email == e2.email
-        assert u3.get_primary_email().email == e3.email
-        assert u4.get_primary_email().email == e4.email
+        assert u1.primary_email.email == e1.email
+        assert u2.primary_email.email == e2.email
+        assert u3.primary_email.email == e3.email
+        assert u4.primary_email.email == e4.email
 
         # make additional emails for three users
         e5 = Email(email = u1.profile.name + '@example2.com', user_id = u1.id)
@@ -226,7 +233,7 @@ class TestCase(BaseTestCase):
             db.session.add(thank_received_by_email)
             db.session.commit()
 
-        assert len(e5.thanks_received.all()) == 4
+        assert len(e5.thanks_received.all()) == 0
         assert len(u1.thanks_received.all()) == 4
         print u1.thanks_received.order_by(Thank.date_registered).all()
 
@@ -237,7 +244,7 @@ class TestCase(BaseTestCase):
         db.session.add(t2e5)
         db.session.commit()
 
-        assert len(e5.thanks_received.all()) == 3
+        assert len(e5.thanks_received.all()) == 0
         assert len(e6.thanks_received.all()) == 3
         assert len(e7.thanks_received.all()) == 2
         assert len(e8.thanks_received.all()) == 1
@@ -254,13 +261,12 @@ class TestCase(BaseTestCase):
         assert len(u3.thanks_received.all()) == 1
         assert len(u4.thanks_received.all()) == 0
 
-        assert len(e5.thanks_received.all()) == 2
+        assert len(e5.thanks_received.all()) == 0
         assert len(e6.thanks_received.all()) == 2
         assert len(e7.thanks_received.all()) == 1
         assert len(e8.thanks_received.all()) == 0
 
-
-        assert all(email in t1.receiver_emails.all() for email in [e5,e6,e7,e8])
+        assert all(email in t1.receiver_emails.all() for email in [e6,e7,e8])
 
 
 if __name__ == '__main__':

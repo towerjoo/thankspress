@@ -1,6 +1,7 @@
 from app import db
 from app.public_page.choices import PublicPageStatusChoices
 from app.thank.choices import ThankStatusChoices, ThankReceivedByPublicPageStatusChoices
+from app.user.choices import UserStatusChoices
 
 from datetime import datetime
 
@@ -12,11 +13,12 @@ class PublicPage(db.Model):
     status = db.Column(db.SmallInteger, nullable = False)
     date_registered = db.Column(db.DateTime, nullable = False)
 
+    creator = db.relationship('User', primaryjoin = 'and_(User.id == PublicPage.creator_id, User.status != %d)' % UserStatusChoices.DELETED)
+
     thanks_received = db.relationship('Thank',
         secondary = 'thank_received_by_public_page', 
         primaryjoin = "and_(ThankReceivedByPublicPage.receiver_id == PublicPage.id, ThankReceivedByPublicPage.status != %d)" % ThankReceivedByPublicPageStatusChoices.DELETED, 
         secondaryjoin = "and_(Thank.id == ThankReceivedByPublicPage.thank_id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
-        backref = db.backref('receiver_public_pages', lazy = 'dynamic'), 
         lazy = 'dynamic')
 
     def __init__(self, name, creator_id, status = PublicPageStatusChoices.NOT_VERIFIED):

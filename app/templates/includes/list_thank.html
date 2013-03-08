@@ -1,0 +1,57 @@
+<li style="margin-bottom:10px;border-bottom:1px solid #ccc;" class="list_thank">
+<div style="overflow:hidden;">
+    <div style="float:left; margin-right:10px;" class="picture">
+        <img style="height:50px;" src="{{ url_for('media', id = thank.giver.profile.picture_id) }}">
+    </div>
+    <div style="float:left;width:500px;" class="body">
+        <ul>
+            <li>
+                <a href="{{ url_for('user_thanks', username = thank.giver.username)}}">
+                    {{ thank.giver.profile.name }} ({{ thank.giver.username }})
+                </a>
+                thanks to:
+                
+                {% for user in thank.receiver_users.all() %}
+                    <span>                
+                        <a href="{{ url_for('user_thanks', username = user.username)}}">
+                            {{ user.profile.name }}
+                        </a>
+                    </span>
+                {% endfor %}
+
+                {% for public_page in thank.receiver_public_pages.all() %}
+                    <span>                
+                        <a href="{{ url_for('public_page', id = public_page.id)}}">
+                            {{ public_page.name }}
+                        </a>
+                    </span>
+                {% endfor %}
+
+                {% if thank.giver == g.user %}
+                    {% for email in thank.receiver_emails.all() %}
+                        <span>                
+                            {{ email.email }}
+                        </span>
+                    {% endfor %}
+                {% endif %}
+            </li>
+            {% if thank.media != None %}
+                <li>
+                    <img src="{{ url_for('media', id = thank.media_id) }}">
+                </li>
+            {% endif %}
+            {% if thank.message != None %}
+                <li>
+                    {{ thank.message }}
+                </li>
+                {% if thank.message_language != None 
+                    and thank.message_language != g.user.language %}
+                    <li>
+                        Translate
+                    </li>
+                {% endif %}
+            {% endif %}
+        </ul>
+    </div>
+</div>
+</li>

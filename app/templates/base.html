@@ -35,31 +35,41 @@
             <header id="header" class="container">
             {% block header %}
                 <div class="inner">
-                    <a href="{{url_for('news_feed')}}" class="logo">ThanksPress</a>
+                    <a href="{{url_for('thanks')}}" class="logo">ThanksPress</a>
                     <ul class="buttons">
                         {% if g.user.is_authenticated() %}
                             {% if g.user.is_new() %}
                             {% else %}
                                 <li>
-                                    <a href="{{url_for('user_timeline',username = g.user.username)}}">{{g.user.username}}</a>
+                                    <a href="{{url_for('user_thanks',username = g.user.username)}}">{{g.user.username}}</a>
+                                </li>
+                                <li>
+                                    <a href="{{url_for('thanks_give')}}">
+                                        Give Thanks
+                                    </a>
                                 </li>
                                 <li class="text">
-                                    <a href="{{url_for('settings_account')}}">
+                                    <a href="{{url_for('notifications')}}">
+                                        Notifications
+                                    </a>
+                                </li>
+                                <li class="text">
+                                    <a href="{{url_for('settings_user')}}">
                                         Settings
                                     </a>
                                 </li>
                             {% endif %}
                             <li class="text">
-                                <a href="{{url_for('sign_out')}}">
-                                    Sign Out
+                                <a href="{{url_for('logout')}}">
+                                    Logout
                                 </a>
                             </li>
                         {% else %}
                             <li class="text">
-                                <a href="{{url_for('sign_up')}}">Sign Up</a>
+                                <a href="{{url_for('register')}}">Register</a>
                             </li>
                             <li class="text">
-                                <a href="{{url_for('sign_in')}}">Sign In</a>
+                                <a href="{{url_for('login')}}">Login</a>
                             </li>
                         {% endif %}
                     </ul>
