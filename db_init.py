@@ -16,9 +16,9 @@ if Media.query.all() == []:
 
     u1_name = 'Dogukan Tufekci' # follows every registered user # thanks everyone #deleted
     u2_name = 'Batikan Tufekci' # follows none but himself # thanks none
-    u3_name = 'Mustafa Demirkent' # follows all # thanks none # all thanks hidden (4)
+    u3_name = 'Mustafa Demirkent' # follows all # thanks none # all thanks hidden (3)
     u4_name = 'Ali Ozdengiz' # follows dogukan and mustafa and himself # thanks dogukan and mustafa privately
-    u5_name = 'Sukran Hoca' # follows every registered user # thanks everyone # deleted
+    u5_name = 'Sukran Hoca' # follows every registered user # thanks everyone but mustafa and ali # deleted
     u6_name = 'Salih Yilmaz' # follows dogukan mustafa ali and himself # thanks dogukan mustafa ali
     # u7_name = 'Ali Yilmaz' # received thanks but not registered yet
 
@@ -118,8 +118,6 @@ if Media.query.all() == []:
 
     t5u1 = ThankReceivedByUser(t5.id, u1.id, status = 1)
     t5u2 = ThankReceivedByUser(t5.id, u2.id, status = 1)
-    t5u3 = ThankReceivedByUser(t5.id, u3.id, status = 2)
-    t5u4 = ThankReceivedByUser(t5.id, u4.id, status = 1)
     t5u5 = ThankReceivedByUser(t5.id, u5.id, status = 1)
     t5u6 = ThankReceivedByUser(t5.id, u6.id, status = 1)
 
@@ -137,8 +135,6 @@ if Media.query.all() == []:
     db.session.add(t4u3)
     db.session.add(t5u1)
     db.session.add(t5u2)
-    db.session.add(t5u3)
-    db.session.add(t5u4)
     db.session.add(t5u5)
     db.session.add(t5u6)
     db.session.add(t6u1)
@@ -164,8 +160,6 @@ if Media.query.all() == []:
     u4u4 = Follow(u4.id, u4.id)
     u5u1 = Follow(u5.id, u1.id)
     u5u2 = Follow(u5.id, u2.id)
-    u5u3 = Follow(u5.id, u3.id)
-    u5u4 = Follow(u5.id, u4.id)
     u5u5 = Follow(u5.id, u5.id)
     u5u6 = Follow(u5.id, u6.id)
     u6u1 = Follow(u6.id, u1.id)
@@ -190,8 +184,6 @@ if Media.query.all() == []:
     db.session.add(u4u4)
     db.session.add(u5u1)
     db.session.add(u5u2)
-    db.session.add(u5u3)
-    db.session.add(u5u4)
     db.session.add(u5u5)
     db.session.add(u5u6)
     db.session.add(u6u1)

@@ -33,15 +33,26 @@ def thanks():
         # thank giver might be deleted but if any thank receiver users are followed, thank will be listed
         # if thank received by user link is deleted ignore
         # if follow is deleted ignore
-        
-        thanks = Thank.query.join(User, 
-                                (User.id == Thank.giver_id))\
-                            .outerjoin(ThankReceivedByUser,
-                                    (ThankReceivedByUser.thank_id == Thank.id))\
-                            .outerjoin(Follow, 
-                                    (Follow.followed_id == ThankReceivedByUser.receiver_id))\
-                            .filter(Follow.followed_id == g.user.id)\
-                            .all()
+
+        # thanks = Thank.query.join(User, 
+        #                         (User.id == Thank.giver_id))\
+        #                     .outerjoin(ThankReceivedByUser,
+        #                             (ThankReceivedByUser.thank_id == Thank.id))\
+        #                     .outerjoin(Follow, 
+        #                             (Follow.followed_id == ThankReceivedByUser.receiver_id))\
+        #                     .filter(Follow.followed_id == g.user.id)\
+        #                     .all()
+
+        thanks = []
+        for thank in Thank.query.order_by(desc(Thank.date_registered)).all():
+            if thank.status == ThankStatusChoices.PUBLIC:
+                if (thank.giver.status != UserStatusChoices.DELETED and thank.giver in g.user.following) \
+                    or any(user in thank.receiver_users for user in g.user.following):
+                        thanks.append(thank)
+            if thank.status == ThankStatusChoices.PRIVATE:
+                if g.user in thank.receiver_users or g.user == thank.giver:
+                    thanks.append(thank)
+
     return render_template('thanks/thanks.html',
         suggested_users = suggested_users,
         thanks = thanks,
