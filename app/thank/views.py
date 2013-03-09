@@ -35,10 +35,7 @@ def thanks():
                                     (ThankReceivedByUser.thank_id == Thank.id))\
                             .outerjoin(Follow, 
                                     (Follow.followed_id == ThankReceivedByUser.receiver_id))\
-                            .filter(or_(Thank.giver_id == g.user.id,
-                                        Follow.follower_id == g.user.id))\
-                            .filter(Thank.status != ThankStatusChoices.DELETED,
-                                    Follow.status == FollowStatusChoices.FOLLOWING)\
+                            .filter(Follow.followed_id == g.user.id)\
                             .all()
     return render_template('thanks/thanks.html',
         suggested_users = suggested_users,
