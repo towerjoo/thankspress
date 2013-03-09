@@ -29,6 +29,11 @@ def thanks():
                             .order_by(desc(Thank.date_registered))\
                             .all()
     else:
+        # user shall only see a list of thanks by users he follow
+        # thank giver might be deleted but if any thank receiver users are followed, thank will be listed
+        # if thank received by user link is deleted ignore
+        # if follow is deleted ignore
+        
         thanks = Thank.query.join(User, 
                                 (User.id == Thank.giver_id))\
                             .outerjoin(ThankReceivedByUser,
