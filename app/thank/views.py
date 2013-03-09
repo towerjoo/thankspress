@@ -9,6 +9,9 @@ from app.thank.models import Thank, ThankReceivedByEmail, \
     ThankReceivedByUser, ThankReceivedByPublicPage
 from app.thank.choices import ThankStatusChoices, ThankReceivedByUserStatusChoices, ThankReceivedByEmailStatusChoices
 
+from app.user.models import User
+from app.user.choices import UserStatusChoices
+
 from flask import render_template, abort, redirect, url_for, g, request, flash
 from flask.ext.login import login_required
 
@@ -19,24 +22,23 @@ from sqlalchemy import desc, or_
 def thanks():
     suggested_users = None
     if g.user.is_anonymous():
-        thanks = Thank.query.filter(Thank.status == ThankStatusChoices.PUBLIC)\
-                                .order_by(desc(Thank.date_registered))\
-                                .all()
+        thanks = Thank.query.join(User, 
+                                (User.id == Thank.giver_id))\
+                            .filter(Thank.status == ThankStatusChoices.PUBLIC,
+                                    User.status != UserStatusChoices.DELETED)\
+                            .order_by(desc(Thank.date_registered))\
+                            .all()
     else:
-        thanks = Thank.query.outerjoin(ThankReceivedByUser,
+        thanks = Thank.query.join(User, 
+                                (User.id == Thank.giver_id))\
+                            .outerjoin(ThankReceivedByUser,
                                     (ThankReceivedByUser.thank_id == Thank.id))\
-                            .outerjoin(ThankReceivedByEmail,
-                                    (ThankReceivedByEmail.thank_id == Thank.id))\
                             .outerjoin(Follow, 
                                     (Follow.followed_id == ThankReceivedByUser.receiver_id))\
-                            .filter(Thank.status != ThankStatusChoices.DELETED,
-                                    ThankReceivedByUser.status != ThankReceivedByUserStatusChoices.DELETED,
-                                    ThankReceivedByUser.status != ThankReceivedByUserStatusChoices.HIDDEN,
-                                    ThankReceivedByEmail.status != ThankReceivedByEmailStatusChoices.DELETED,
-                                    ThankReceivedByEmail.status != ThankReceivedByEmailStatusChoices.MIGRATED,
-                                    Follow.status != FollowStatusChoices.DELETED)\
                             .filter(or_(Thank.giver_id == g.user.id,
                                         Follow.follower_id == g.user.id))\
+                            .filter(Thank.status != ThankStatusChoices.DELETED,
+                                    Follow.status == FollowStatusChoices.FOLLOWING)\
                             .all()
     return render_template('thanks/thanks.html',
         suggested_users = suggested_users,

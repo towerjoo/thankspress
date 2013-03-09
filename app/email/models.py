@@ -17,21 +17,23 @@ class Email(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
 
-    user = db.relationship("User", 
-        primaryjoin = "and_(User.id == Email.user_id, User.status != %d)" % UserStatusChoices.DELETED)
+    # Relationships ----------------------------------------
+
+    user = db.relationship("User", primaryjoin = "User.id == Email.user_id")
+
     thanks_received = db.relationship('Thank',
         secondary = 'thank_received_by_email', 
         primaryjoin = "and_(ThankReceivedByEmail.receiver_id == Email.id, \
-                            ThankReceivedByEmail.status != %d, \
-                            ThankReceivedByEmail.status != %d)" % ( ThankReceivedByEmailStatusChoices.MIGRATED,
-                                                                    ThankReceivedByEmailStatusChoices.DELETED),
+                            ThankReceivedByEmail.status != %d)" % ThankReceivedByEmailStatusChoices.DELETED,
         secondaryjoin = "and_(Thank.id == ThankReceivedByEmail.thank_id, Thank.status != %d)" % ThankStatusChoices.DELETED, 
         lazy = 'dynamic')
-    thanks_received_by_email = db.relationship("ThankReceivedByEmail", 
+
+    thank_received_by_emails = db.relationship("ThankReceivedByEmail", 
         primaryjoin = "and_(ThankReceivedByEmail.receiver_id == Email.id, \
                             ThankReceivedByEmail.status != %d)" % ThankReceivedByEmailStatusChoices.DELETED, 
         lazy = "dynamic")
 
+    # Methods -----------------------------------------------
 
     def __init__(self, email, is_primary = False, status = EmailStatusChoices.NOT_VERIFIED, user_id = None):
         self.date_registered = datetime.utcnow()

@@ -38,12 +38,13 @@
 			{% if thanks == [] %}
 				No thanks here.
 			{% else %}
+				<ul>
 	            {% for thank in thanks %}
 	                {% if thank.is_public() or g.user in thank.receiver_users.all() or g.user == thank.giver %}
-	                    {% include "users/includes/thank.html" %}
-	                    <hr>
+	                    {% include "includes/list_thank.html" %}
 	                {% endif %}
 	            {% endfor %}
+	        	</ul>
             {% endif %}
 		</div>
 	</div>

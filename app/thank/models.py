@@ -21,8 +21,8 @@ class Thank(db.Model):
     message_language = db.Column(db.String(5))
     media_id = db.Column(db.Integer, db.ForeignKey("media.id"))
 
-    giver = db.relationship('User', primaryjoin = 'and_(User.id == Thank.giver_id, User.status != %d)' % UserStatusChoices.DELETED)
-    media = db.relationship('Media', primaryjoin = 'and_(Media.id == Thank.media_id)')
+    giver = db.relationship('User', primaryjoin = 'User.id == Thank.giver_id')
+    media = db.relationship('Media', primaryjoin = 'Media.id == Thank.media_id')
 
 
     comments = db.relationship("ThankComment", 

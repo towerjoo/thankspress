@@ -44,10 +44,11 @@
                 <li>
                     {{ thank.message }}
                 </li>
-                {% if thank.message_language != None 
+                {% if g.user.is_authenticated() 
+                    and thank.message_language != None 
                     and thank.message_language != g.user.language %}
                     <li>
-                        Translate
+                        <a style="color:#aaa;" href="#"><em>Translate</em></a>
                     </li>
                 {% endif %}
             {% endif %}
