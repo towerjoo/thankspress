@@ -29,6 +29,7 @@ def thanks():
                             .order_by(desc(Thank.date_registered))\
                             .all()
     else:
+
         # user shall only see a list of thanks by users he follow
         # thank giver might be deleted but if any thank receiver users are followed, thank will be listed
         # if thank received by user link is deleted ignore
@@ -42,6 +43,15 @@ def thanks():
         #                             (Follow.followed_id == ThankReceivedByUser.receiver_id))\
         #                     .filter(Follow.followed_id == g.user.id)\
         #                     .all()
+        result = db.session.execute("SELECT d.id, d.giver_id, c.username, d.message \
+				FROM \
+				thank_received_by_user a, follow b, user c, thank d \
+				WHERE \
+				b.follower_id=%d and b.followed_id=a.receiver_id and d.id=a.thank_id and c.id=d.giver_id and d.status != %d \
+				ORDER BY \
+				a.date_registered" 
+				% (g.user.id, ThankStatusChoices.DELETED))
+        thanks = result.fetchall()
 
         thanks = []
         for thank in Thank.query.order_by(desc(Thank.date_registered)).all():
